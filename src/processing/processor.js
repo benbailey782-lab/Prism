@@ -1,4 +1,11 @@
-import { getTranscript, createSegment, addSegmentTag, updateTranscript, saveTranscriptMetrics } from '../db/queries.js';
+import { getTranscript, createSegment, addSegmentTag, updateTranscript, saveTranscriptMetrics, getAllPeople, getAllDeals } from '../db/queries.js';
+
+// Phase 2 processing imports
+import { classifySegment } from './classifier.js';
+import { extractEntities } from './entityExtractor.js';
+import { linkEntities } from './entityLinker.js';
+import { extractMeddpicc, updateDealMeddpiccFromFindings } from './meddpiccExtractor.js';
+import { analyzeMetrics, saveComprehensiveMetrics } from './metricsAnalyzer.js';
 
 // AI Provider configuration
 let aiProvider = null;
@@ -80,9 +87,18 @@ export function getAIStatus() {
 }
 
 /**
+ * Get the callAI function for use in other modules
+ * @returns {function|null} The callAI function or null if not initialized
+ */
+export function getCallAI() {
+  if (!aiProvider) return null;
+  return callAI;
+}
+
+/**
  * Call the configured AI provider
  */
-async function callAI(prompt, options = {}) {
+export async function callAI(prompt, options = {}) {
   if (!aiProvider) {
     throw new Error('AI not initialized');
   }
@@ -125,58 +141,128 @@ async function callAI(prompt, options = {}) {
 
 /**
  * Process a transcript - segment it, tag segments, extract entities
- * This is the main AI processing pipeline
+ * This is the main AI processing pipeline (Phase 2 Enhanced)
  */
-export async function processTranscript(transcriptId) {
+export async function processTranscript(transcriptId, options = {}) {
   const transcript = getTranscript(transcriptId);
   if (!transcript) {
     throw new Error(`Transcript not found: ${transcriptId}`);
   }
-  
+
   console.log(`Processing transcript: ${transcript.filename}`);
-  
+
   // If no AI provider, use stub processing
   if (!aiProvider) {
     console.log('No AI provider - using stub processing');
     return stubProcessTranscript(transcript);
   }
-  
+
   try {
+    const result = {
+      segments: [],
+      metrics: null,
+      entities: null,
+      meddpicc: null,
+      linkedEntities: null
+    };
+
     // Step 1: Segment the transcript
     const segments = await segmentTranscript(transcript);
-    
-    // Step 2: Save segments and tags
+    const segmentIds = [];
+
+    // Step 2: Save segments and tags with enhanced classification
     for (const segment of segments) {
+      // Enhanced classification for each segment (Phase 2)
+      let classification = { knowledgeType: segment.knowledgeType, confidence: 0.7 };
+      if (options.enhancedClassification !== false) {
+        try {
+          classification = await classifySegment(segment.content, {
+            source: transcript.filename,
+            speakers: [segment.speaker]
+          }, callAI);
+        } catch (err) {
+          console.warn('Enhanced classification failed, using basic:', err.message);
+        }
+      }
+
       const segmentId = createSegment({
         transcriptId: transcript.id,
         content: segment.content,
         startTime: segment.startTime,
         endTime: segment.endTime,
         speaker: segment.speaker,
-        knowledgeType: segment.knowledgeType,
-        summary: segment.summary
+        knowledgeType: classification.knowledgeType || segment.knowledgeType,
+        summary: classification.summary || segment.summary,
+        confidence: classification.confidence
       });
-      
+
+      segmentIds.push(segmentId);
+
       // Add tags
-      for (const tag of segment.tags || []) {
+      const tags = [...(segment.tags || []), ...(classification.tags || [])];
+      const uniqueTags = [...new Set(tags)];
+      for (const tag of uniqueTags) {
         addSegmentTag(segmentId, tag);
       }
+
+      result.segments.push({ id: segmentId, ...segment, ...classification });
     }
-    
-    // Step 3: Generate transcript-level summary and metrics
-    const metrics = await analyzeTranscript(transcript);
-    saveTranscriptMetrics(transcript.id, metrics);
-    
-    // Step 4: Update transcript with summary
+
+    // Step 3: Extract entities (Phase 2)
+    if (options.extractEntities !== false) {
+      try {
+        result.entities = await extractEntities(transcript, callAI);
+        console.log(`Extracted ${result.entities.people?.length || 0} people, ${result.entities.companies?.length || 0} companies`);
+
+        // Step 4: Link entities to database records
+        result.linkedEntities = await linkEntities(result.entities, transcript.id, segmentIds);
+        console.log(`Linked ${result.linkedEntities.people?.length || 0} people, ${result.linkedEntities.deals?.length || 0} deals`);
+      } catch (err) {
+        console.warn('Entity extraction/linking failed:', err.message);
+      }
+    }
+
+    // Step 5: Extract MEDDPICC signals if deal context exists (Phase 2)
+    if (options.extractMeddpicc !== false && result.entities?.dealContext?.existingDealMatch) {
+      try {
+        const deal = { id: result.entities.dealContext.existingDealMatch, company_name: result.entities.dealContext.companyName };
+        result.meddpicc = await extractMeddpicc(transcript, deal, callAI);
+
+        // Update MEDDPICC scorecard
+        if (result.meddpicc.findings?.length > 0) {
+          await updateDealMeddpiccFromFindings(deal.id, result.meddpicc, segmentIds[0]);
+          console.log(`Updated MEDDPICC with ${result.meddpicc.findings.length} findings`);
+        }
+      } catch (err) {
+        console.warn('MEDDPICC extraction failed:', err.message);
+      }
+    }
+
+    // Step 6: Generate comprehensive metrics (Phase 2 enhanced)
+    if (options.analyzeMetrics !== false) {
+      try {
+        result.metrics = await analyzeMetrics(transcript, callAI);
+        saveComprehensiveMetrics(transcript.id, result.metrics);
+      } catch (err) {
+        console.warn('Enhanced metrics failed, using basic:', err.message);
+        result.metrics = await analyzeTranscriptBasic(transcript);
+        saveTranscriptMetrics(transcript.id, result.metrics);
+      }
+    } else {
+      result.metrics = await analyzeTranscriptBasic(transcript);
+      saveTranscriptMetrics(transcript.id, result.metrics);
+    }
+
+    // Step 7: Update transcript with summary
     updateTranscript(transcript.id, {
-      summary: metrics.summary,
+      summary: result.metrics.summary || result.metrics.topPriority,
       processed_at: new Date().toISOString()
     });
-    
-    console.log(`Processed transcript: ${transcript.filename} - ${segments.length} segments`);
-    
-    return { segments, metrics };
-    
+
+    console.log(`Processed transcript: ${transcript.filename} - ${segments.length} segments (Phase 2 enhanced)`);
+
+    return result;
+
   } catch (err) {
     console.error(`AI processing failed for ${transcript.filename}:`, err);
     // Fall back to stub processing
@@ -250,9 +336,9 @@ Respond ONLY with valid JSON, no other text:
 }
 
 /**
- * Analyze transcript for metrics and summary
+ * Analyze transcript for metrics and summary (basic version)
  */
-async function analyzeTranscript(transcript) {
+async function analyzeTranscriptBasic(transcript) {
   const prompt = `Analyze this sales/work transcript and provide:
 
 1. Overall summary (2-3 sentences)
@@ -379,5 +465,7 @@ function stubProcessTranscript(transcript) {
 export default {
   initAI,
   getAIStatus,
+  getCallAI,
+  callAI,
   processTranscript
 };

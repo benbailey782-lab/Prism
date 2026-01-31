@@ -198,7 +198,7 @@ function DealCard({ deal, onClick }) {
   );
 }
 
-function DealList() {
+function DealList({ onSelect }) {
   const [deals, setDeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -248,7 +248,15 @@ function DealList() {
     }
   };
 
-  if (selectedDeal) {
+  const handleSelectDeal = (deal) => {
+    if (onSelect) {
+      onSelect(deal);
+    } else {
+      setSelectedDeal(deal.id);
+    }
+  };
+
+  if (!onSelect && selectedDeal) {
     return (
       <DealDetail
         dealId={selectedDeal}
@@ -299,7 +307,7 @@ function DealList() {
             <DealCard
               key={deal.id}
               deal={deal}
-              onClick={() => setSelectedDeal(deal.id)}
+              onClick={() => handleSelectDeal(deal)}
             />
           ))}
         </div>

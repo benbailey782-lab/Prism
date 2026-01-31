@@ -8,7 +8,16 @@ import fs from 'fs';
 import { initDatabase } from './db/schema.js';
 import * as queries from './db/queries.js';
 import { startWatcher } from './ingestion/watcher.js';
-import { initAI, getAIStatus, processTranscript } from './processing/processor.js';
+import { initAI, getAIStatus, processTranscript, getCallAI } from './processing/processor.js';
+
+// Phase 2 imports
+import prospectRoutes from './api/prospects.js';
+import outreachRoutes from './api/outreach.js';
+import insightRoutes from './api/insights.js';
+import learningRoutes from './api/learning.js';
+import { initAnalysisJobs } from './learning/analysisJobs.js';
+import { getMeddpiccSummary } from './processing/meddpiccExtractor.js';
+import { getSegmentsForPerson, getSegmentsForDeal } from './db/queries.js';
 
 dotenv.config();
 
@@ -39,6 +48,14 @@ let aiInitialized = false;
     baseUrl: process.env.OLLAMA_BASE_URL,
     model: process.env.OLLAMA_MODEL || process.env.AI_MODEL
   });
+
+  // Initialize learning engine analysis jobs
+  if (aiInitialized) {
+    const callAI = getCallAI();
+    if (callAI) {
+      initAnalysisJobs(callAI);
+    }
+  }
 })();
 
 // Ensure transcripts folder exists
@@ -330,6 +347,116 @@ app.put('/api/deals/:id/meddpicc/:letter', (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Get MEDDPICC summary for a deal
+app.get('/api/deals/:id/meddpicc/summary', (req, res) => {
+  try {
+    const summary = getMeddpiccSummary(req.params.id);
+    res.json(summary);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get segments linked to a deal
+app.get('/api/deals/:id/segments', (req, res) => {
+  try {
+    const segments = getSegmentsForDeal(req.params.id);
+    res.json(segments);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get segments linked to a person
+app.get('/api/people/:id/segments', (req, res) => {
+  try {
+    const segments = getSegmentsForPerson(req.params.id);
+    res.json(segments);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================
+// ASK (Natural Language Query)
+// ============================================
+
+app.post('/api/ask', async (req, res) => {
+  try {
+    const { query } = req.body;
+    if (!query) {
+      return res.status(400).json({ error: 'Query is required' });
+    }
+
+    const aiStatus = getAIStatus();
+    if (!aiStatus.enabled) {
+      return res.status(400).json({
+        error: 'AI not available. Please start Ollama or configure Anthropic API key.'
+      });
+    }
+
+    const callAI = getCallAI();
+    if (!callAI) {
+      return res.status(500).json({ error: 'AI not initialized' });
+    }
+
+    // Gather context from the database
+    const deals = queries.getAllDeals();
+    const people = queries.getAllPeople();
+    const recentTranscripts = queries.getAllTranscripts().slice(0, 10);
+    const prospects = queries.getAllProspects ? queries.getAllProspects() : [];
+
+    // Build context for the AI
+    const context = `
+You are Sales Brain, a personal sales intelligence assistant. Answer questions based on the following sales data:
+
+## Active Deals (${deals.length} total)
+${deals.slice(0, 10).map(d => `- ${d.company_name}: $${d.value_amount || 'TBD'}, Status: ${d.status || 'active'}, Contact: ${d.contact_name || 'Unknown'}`).join('\n')}
+
+## Key Contacts (${people.length} total)
+${people.slice(0, 10).map(p => `- ${p.name} (${p.relationship_type || 'contact'}): ${p.role || ''} at ${p.company || 'Unknown company'}`).join('\n')}
+
+## Prospects (${prospects.length} total)
+${prospects.slice(0, 10).map(p => `- ${p.company_name}: Tier ${p.tier || 3}, Score: ${p.score || 0}`).join('\n')}
+
+## Recent Transcripts (${recentTranscripts.length} shown)
+${recentTranscripts.map(t => `- ${t.filename}: ${t.processed ? 'Processed' : 'Pending'}, ${t.segment_count || 0} segments`).join('\n')}
+
+Answer the user's question concisely and helpfully. If you don't have enough information, say so.
+`;
+
+    const prompt = `${context}\n\nUser Question: ${query}\n\nAnswer:`;
+
+    const response = await callAI(prompt, {
+      maxTokens: 500,
+      temperature: 0.7
+    });
+
+    // Extract sources from the response context
+    const sources = [];
+    if (deals.length > 0) sources.push({ type: 'deals', name: `${deals.length} deals` });
+    if (people.length > 0) sources.push({ type: 'people', name: `${people.length} contacts` });
+    if (prospects.length > 0) sources.push({ type: 'prospects', name: `${prospects.length} prospects` });
+
+    res.json({
+      answer: response,
+      sources
+    });
+  } catch (err) {
+    console.error('Ask error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================
+// PHASE 2: MOUNT NEW ROUTES
+// ============================================
+
+app.use('/api/prospects', prospectRoutes);
+app.use('/api/outreach', outreachRoutes);
+app.use('/api/insights', insightRoutes);
+app.use('/api/learning', learningRoutes);
 
 // ============================================
 // START SERVER

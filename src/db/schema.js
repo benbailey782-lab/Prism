@@ -2,6 +2,7 @@ import Database from 'better-sqlite3';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import fs from 'fs';
+import { v4 as uuidv4 } from 'uuid';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -237,7 +238,183 @@ export function initDatabase() {
       computed_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
-  
+
+  // ============================================
+  // PHASE 2: PROSPECTING TABLES
+  // ============================================
+
+  // Prospect accounts (pre-deal pipeline)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS prospects (
+      id TEXT PRIMARY KEY,
+      company_name TEXT NOT NULL,
+      website TEXT,
+      industry TEXT,
+      employee_count INTEGER,
+      employee_range TEXT,
+      estimated_revenue TEXT,
+      location TEXT,
+      tech_stack TEXT,
+      tier INTEGER DEFAULT 3 CHECK(tier IN (1, 2, 3)),
+      score INTEGER DEFAULT 0,
+      status TEXT DEFAULT 'active' CHECK(status IN ('active', 'nurture', 'converted', 'disqualified', 'archived')),
+      converted_deal_id TEXT,
+      notes TEXT,
+      source TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (converted_deal_id) REFERENCES deals(id)
+    )
+  `);
+
+  // Buying signals for prospects
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS prospect_signals (
+      id TEXT PRIMARY KEY,
+      prospect_id TEXT NOT NULL,
+      signal_type TEXT NOT NULL,
+      signal_value TEXT,
+      weight INTEGER DEFAULT 10,
+      detected_at DATETIME,
+      source TEXT,
+      notes TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (prospect_id) REFERENCES prospects(id) ON DELETE CASCADE
+    )
+  `);
+
+  // Contacts at prospect accounts
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS prospect_contacts (
+      id TEXT PRIMARY KEY,
+      prospect_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      title TEXT,
+      email TEXT,
+      linkedin_url TEXT,
+      phone TEXT,
+      persona TEXT CHECK(persona IN ('decision_maker', 'champion', 'influencer', 'blocker', 'user', 'unknown')),
+      is_primary INTEGER DEFAULT 0,
+      notes TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (prospect_id) REFERENCES prospects(id) ON DELETE CASCADE
+    )
+  `);
+
+  // Outreach activity log
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS outreach_log (
+      id TEXT PRIMARY KEY,
+      prospect_id TEXT NOT NULL,
+      contact_id TEXT,
+      outreach_date DATE NOT NULL,
+      method TEXT NOT NULL CHECK(method IN ('email', 'linkedin', 'call', 'text', 'video', 'in_person', 'other')),
+      direction TEXT DEFAULT 'outbound' CHECK(direction IN ('outbound', 'inbound')),
+      subject TEXT,
+      content_summary TEXT,
+      outcome TEXT DEFAULT 'pending' CHECK(outcome IN ('pending', 'no_response', 'positive', 'negative', 'meeting_booked', 'replied', 'bounced')),
+      next_action TEXT,
+      next_followup_date DATE,
+      sequence_step INTEGER,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (prospect_id) REFERENCES prospects(id) ON DELETE CASCADE,
+      FOREIGN KEY (contact_id) REFERENCES prospect_contacts(id) ON DELETE SET NULL
+    )
+  `);
+
+  // ============================================
+  // PHASE 2: LEARNING ENGINE TABLES
+  // ============================================
+
+  // System-generated insights
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS insights (
+      id TEXT PRIMARY KEY,
+      insight_type TEXT NOT NULL,
+      category TEXT,
+      title TEXT NOT NULL,
+      hypothesis TEXT NOT NULL,
+      confidence REAL DEFAULT 0.5,
+      evidence TEXT,
+      sample_size INTEGER,
+      status TEXT DEFAULT 'active' CHECK(status IN ('active', 'validated', 'invalidated', 'superseded')),
+      superseded_by TEXT,
+      user_feedback TEXT CHECK(user_feedback IN ('helpful', 'not_helpful', 'incorrect', NULL)),
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (superseded_by) REFERENCES insights(id)
+    )
+  `);
+
+  // Insight history for tracking evolution
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS insight_history (
+      id TEXT PRIMARY KEY,
+      insight_id TEXT NOT NULL,
+      confidence REAL,
+      evidence TEXT,
+      sample_size INTEGER,
+      snapshot_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (insight_id) REFERENCES insights(id) ON DELETE CASCADE
+    )
+  `);
+
+  // Outcome tracking for learning
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS outcomes (
+      id TEXT PRIMARY KEY,
+      entity_type TEXT NOT NULL CHECK(entity_type IN ('deal', 'prospect', 'outreach', 'call')),
+      entity_id TEXT NOT NULL,
+      outcome_type TEXT NOT NULL,
+      outcome_date DATE,
+      outcome_value REAL,
+      context TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // Learned signal weights (system-adjusted)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS learned_weights (
+      id TEXT PRIMARY KEY,
+      signal_type TEXT NOT NULL UNIQUE,
+      default_weight INTEGER DEFAULT 10,
+      learned_weight REAL,
+      confidence REAL DEFAULT 0.5,
+      sample_size INTEGER DEFAULT 0,
+      last_calibrated_at DATETIME,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // ============================================
+  // PHASE 2: CONFIGURATION TABLES
+  // ============================================
+
+  // User-configurable settings
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS config (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      category TEXT,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // Cadence templates
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS cadence_templates (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      tier INTEGER,
+      steps TEXT NOT NULL,
+      is_default INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
   // ============================================
   // INDEXES
   // ============================================
@@ -255,9 +432,133 @@ export function initDatabase() {
     CREATE INDEX IF NOT EXISTS idx_transcripts_date ON transcripts(call_date);
     CREATE INDEX IF NOT EXISTS idx_transcripts_content_hash ON transcripts(content_hash);
   `);
-  
+
+  // ============================================
+  // PHASE 2 INDEXES
+  // ============================================
+
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_prospects_tier ON prospects(tier);
+    CREATE INDEX IF NOT EXISTS idx_prospects_status ON prospects(status);
+    CREATE INDEX IF NOT EXISTS idx_prospects_score ON prospects(score DESC);
+    CREATE INDEX IF NOT EXISTS idx_prospect_signals_prospect ON prospect_signals(prospect_id);
+    CREATE INDEX IF NOT EXISTS idx_prospect_contacts_prospect ON prospect_contacts(prospect_id);
+    CREATE INDEX IF NOT EXISTS idx_outreach_log_prospect ON outreach_log(prospect_id);
+    CREATE INDEX IF NOT EXISTS idx_outreach_log_date ON outreach_log(outreach_date DESC);
+    CREATE INDEX IF NOT EXISTS idx_outreach_log_followup ON outreach_log(next_followup_date);
+    CREATE INDEX IF NOT EXISTS idx_insights_type ON insights(insight_type);
+    CREATE INDEX IF NOT EXISTS idx_insights_status ON insights(status);
+    CREATE INDEX IF NOT EXISTS idx_outcomes_entity ON outcomes(entity_type, entity_id);
+  `);
+
+  // Seed defaults after table creation
+  seedDefaults(db);
+
   console.log('Database initialized successfully');
   return db;
+}
+
+// ============================================
+// SEED DEFAULTS
+// ============================================
+
+function seedDefaults(db) {
+  // Default signal weights
+  const defaultWeights = [
+    { signal_type: 'recent_funding', default_weight: 20 },
+    { signal_type: 'hiring_signals', default_weight: 15 },
+    { signal_type: 'tech_stack_fit', default_weight: 10 },
+    { signal_type: 'industry_fit', default_weight: 10 },
+    { signal_type: 'company_size_fit', default_weight: 10 },
+    { signal_type: 'social_engagement', default_weight: 10 },
+    { signal_type: 'competitor_customer', default_weight: 15 },
+    { signal_type: 'inbound_signal', default_weight: 25 },
+    { signal_type: 'previous_relationship', default_weight: 15 },
+    { signal_type: 'recent_news', default_weight: 10 },
+    { signal_type: 'growth_indicators', default_weight: 12 },
+    { signal_type: 'pain_indicators', default_weight: 18 },
+  ];
+
+  const weightStmt = db.prepare(`
+    INSERT OR IGNORE INTO learned_weights (id, signal_type, default_weight, learned_weight)
+    VALUES (?, ?, ?, ?)
+  `);
+
+  for (const w of defaultWeights) {
+    weightStmt.run(uuidv4(), w.signal_type, w.default_weight, w.default_weight);
+  }
+
+  // Default cadence templates
+  const cadences = [
+    {
+      name: 'Tier 1 - High Touch',
+      tier: 1,
+      steps: JSON.stringify([
+        { day: 0, method: 'email', note: 'Personalized intro' },
+        { day: 2, method: 'linkedin', note: 'Connection request' },
+        { day: 5, method: 'email', note: 'Follow-up with value' },
+        { day: 8, method: 'call', note: 'Direct dial attempt' },
+        { day: 12, method: 'email', note: 'Case study share' },
+        { day: 16, method: 'linkedin', note: 'Engage with content' },
+        { day: 21, method: 'call', note: 'Second call attempt' },
+        { day: 28, method: 'email', note: 'Breakup email' },
+      ]),
+      is_default: 1
+    },
+    {
+      name: 'Tier 2 - Standard',
+      tier: 2,
+      steps: JSON.stringify([
+        { day: 0, method: 'email', note: 'Intro email' },
+        { day: 4, method: 'linkedin', note: 'Connection request' },
+        { day: 10, method: 'email', note: 'Follow-up' },
+        { day: 18, method: 'email', note: 'Value add' },
+        { day: 28, method: 'email', note: 'Breakup email' },
+      ]),
+      is_default: 1
+    },
+    {
+      name: 'Tier 3 - Light Touch',
+      tier: 3,
+      steps: JSON.stringify([
+        { day: 0, method: 'email', note: 'Intro email' },
+        { day: 14, method: 'email', note: 'Follow-up' },
+        { day: 30, method: 'email', note: 'Final attempt' },
+      ]),
+      is_default: 1
+    }
+  ];
+
+  const cadenceStmt = db.prepare(`
+    INSERT OR IGNORE INTO cadence_templates (id, name, tier, steps, is_default)
+    VALUES (?, ?, ?, ?, ?)
+  `);
+
+  // Check if cadences already exist
+  const existingCadences = db.prepare('SELECT COUNT(*) as count FROM cadence_templates').get();
+  if (existingCadences.count === 0) {
+    for (const c of cadences) {
+      cadenceStmt.run(uuidv4(), c.name, c.tier, c.steps, c.is_default);
+    }
+  }
+
+  // Default tier thresholds config
+  const configs = [
+    { key: 'tier1_threshold', value: '70', category: 'scoring' },
+    { key: 'tier2_threshold', value: '40', category: 'scoring' },
+    { key: 'followup_overdue_days', value: '7', category: 'cadence' },
+    { key: 'target_talk_ratio_min', value: '0.35', category: 'coaching' },
+    { key: 'target_talk_ratio_max', value: '0.50', category: 'coaching' },
+  ];
+
+  const configStmt = db.prepare(`
+    INSERT OR IGNORE INTO config (key, value, category)
+    VALUES (?, ?, ?)
+  `);
+
+  for (const c of configs) {
+    configStmt.run(c.key, c.value, c.category);
+  }
 }
 
 export function getDatabase() {

@@ -1,23 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { Brain, FileText, Users, Target, MessageSquare, BarChart3, Folder, Zap, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
+import Sidebar from './components/layout/Sidebar';
+import Header from './components/layout/Header';
 import TranscriptList from './components/TranscriptList';
 import TranscriptDetail from './components/TranscriptDetail';
 import SegmentBrowser from './components/SegmentBrowser';
 import StatsPanel from './components/StatsPanel';
 import DealList from './components/DealList';
+import DealDetail from './components/DealDetail';
 import PeopleList from './components/PeopleList';
-
-const TABS = [
-  { id: 'transcripts', label: 'Transcripts', icon: FileText },
-  { id: 'segments', label: 'Knowledge', icon: Folder },
-  { id: 'deals', label: 'Deals', icon: Target },
-  { id: 'people', label: 'People', icon: Users },
-  { id: 'stats', label: 'Stats', icon: BarChart3 },
-];
+import PersonDetail from './components/PersonDetail';
+import ProspectList from './components/prospects/ProspectList';
+import ProspectDetail from './components/prospects/ProspectDetail';
+import InsightsDashboard from './components/insights/InsightsDashboard';
+import AskPanel from './components/AskPanel';
 
 function App() {
-  const [activeTab, setActiveTab] = useState('transcripts');
-  const [selectedTranscript, setSelectedTranscript] = useState(null);
+  const [activeView, setActiveView] = useState('ask');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
   const [health, setHealth] = useState(null);
   const [error, setError] = useState(null);
 
@@ -29,117 +30,129 @@ function App() {
       .catch(err => setError('Cannot connect to server. Is it running?'));
   }, []);
 
+  const handleSelectItem = (item) => {
+    setSelectedItem(item);
+  };
+
+  const handleBack = () => {
+    setSelectedItem(null);
+  };
+
+  const handleNavigate = (viewId) => {
+    setActiveView(viewId);
+    setSelectedItem(null);
+  };
+
   const renderContent = () => {
-    if (selectedTranscript) {
-      return (
-        <TranscriptDetail 
-          transcript={selectedTranscript} 
-          onBack={() => setSelectedTranscript(null)} 
-        />
-      );
+    // Handle detail views when an item is selected
+    if (selectedItem) {
+      switch (activeView) {
+        case 'transcripts':
+          return (
+            <TranscriptDetail
+              transcript={selectedItem}
+              onBack={handleBack}
+            />
+          );
+        case 'deals':
+          return (
+            <DealDetail
+              deal={selectedItem}
+              onBack={handleBack}
+              onNavigateToPerson={(person) => {
+                setActiveView('people');
+                setSelectedItem(person);
+              }}
+            />
+          );
+        case 'people':
+          return (
+            <PersonDetail
+              person={selectedItem}
+              onBack={handleBack}
+              onNavigateToDeal={(deal) => {
+                setActiveView('deals');
+                setSelectedItem(deal);
+              }}
+            />
+          );
+        case 'prospects':
+          return (
+            <ProspectDetail
+              prospect={selectedItem}
+              onBack={handleBack}
+              onConvertToDeal={(deal) => {
+                setActiveView('deals');
+                setSelectedItem(deal);
+              }}
+            />
+          );
+        default:
+          break;
+      }
     }
 
-    switch (activeTab) {
-      case 'transcripts':
-        return <TranscriptList onSelect={setSelectedTranscript} />;
-      case 'segments':
-        return <SegmentBrowser />;
+    // Main list/panel views
+    switch (activeView) {
+      case 'ask':
+        return <AskPanel />;
+      case 'insights':
+        return <InsightsDashboard />;
+      case 'prospects':
+        return <ProspectList onSelect={handleSelectItem} />;
       case 'deals':
-        return <DealList />;
+        return <DealList onSelect={handleSelectItem} />;
       case 'people':
-        return <PeopleList />;
+        return <PeopleList onSelect={handleSelectItem} />;
+      case 'knowledge':
+        return <SegmentBrowser />;
+      case 'transcripts':
+        return <TranscriptList onSelect={handleSelectItem} />;
       case 'stats':
         return <StatsPanel />;
       default:
-        return null;
+        return <AskPanel />;
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <header className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center">
-                <Brain className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-semibold text-white">Sales Brain</h1>
-                <p className="text-xs text-zinc-500">Personal Learning Engine</p>
-              </div>
-            </div>
+    <div className="min-h-screen flex bg-zinc-950">
+      {/* Sidebar */}
+      <Sidebar
+        activeView={activeView}
+        onNavigate={handleNavigate}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        health={health}
+      />
 
-            {/* Status indicators */}
-            <div className="flex items-center gap-4">
-              {health && (
-                <>
-                  <div className="flex items-center gap-2 text-xs">
-                    <div className={`w-2 h-2 rounded-full ${health.aiEnabled ? 'bg-green-500' : 'bg-amber-500'}`} />
-                    <span className="text-zinc-400">
-                      {health.aiEnabled ? 'AI Active' : 'AI Inactive'}
-                    </span>
-                  </div>
-                  <div className="text-xs text-zinc-500 font-mono">
-                    {health.watchFolder}
-                  </div>
-                </>
-              )}
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col min-h-screen overflow-hidden">
+        {/* Header */}
+        <Header
+          health={health}
+          activeView={activeView}
+          showBack={!!selectedItem}
+          onBack={handleBack}
+        />
+
+        {/* Error banner */}
+        {error && (
+          <div className="bg-red-500/10 border-b border-red-500/20 px-6 py-3">
+            <div className="flex items-center gap-3 text-red-400">
+              <AlertCircle className="w-5 h-5" />
+              <span className="text-sm">{error}</span>
             </div>
           </div>
-        </div>
-      </header>
+        )}
 
-      {/* Error banner */}
-      {error && (
-        <div className="bg-red-500/10 border-b border-red-500/20 px-6 py-3">
-          <div className="max-w-7xl mx-auto flex items-center gap-3 text-red-400">
-            <AlertCircle className="w-5 h-5" />
-            <span className="text-sm">{error}</span>
+        {/* Main content */}
+        <main className="flex-1 overflow-auto">
+          <div className="p-6">
+            {renderContent()}
           </div>
-        </div>
-      )}
-
-      {/* Navigation */}
-      {!selectedTranscript && (
-        <nav className="border-b border-zinc-800 bg-zinc-900/30">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="flex gap-1">
-              {TABS.map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`
-                    flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors
-                    border-b-2 -mb-px
-                    ${activeTab === tab.id 
-                      ? 'border-green-500 text-white' 
-                      : 'border-transparent text-zinc-400 hover:text-zinc-200'}
-                  `}
-                >
-                  <tab.icon className="w-4 h-4" />
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </nav>
-      )}
-
-      {/* Main content */}
-      <main className="flex-1">
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          {renderContent()}
-        </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-zinc-800 py-4">
-        <div className="max-w-7xl mx-auto px-6 text-center text-xs text-zinc-600">
-          Drop transcript files in the watch folder to begin
-        </div>
-      </footer>
+        </main>
+      </div>
     </div>
   );
 }

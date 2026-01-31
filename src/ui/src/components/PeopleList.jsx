@@ -146,11 +146,14 @@ function CreatePersonModal({ isOpen, onClose, onCreate }) {
   );
 }
 
-function PersonCard({ person }) {
+function PersonCard({ person, onClick }) {
   const relationshipColor = RELATIONSHIP_COLORS[person.relationship_type] || RELATIONSHIP_COLORS.other;
 
   return (
-    <div className="bg-zinc-800/50 rounded-xl border border-zinc-700/50 p-5 hover:bg-zinc-700/30 transition-colors">
+    <div
+      onClick={onClick}
+      className="bg-zinc-800/50 rounded-xl border border-zinc-700/50 p-5 hover:bg-zinc-700/30 transition-colors cursor-pointer"
+    >
       <div className="flex items-start gap-4">
         <div className="w-12 h-12 rounded-full bg-zinc-700 flex items-center justify-center text-lg font-medium text-zinc-300">
           {person.name.charAt(0).toUpperCase()}
@@ -208,7 +211,7 @@ function PersonCard({ person }) {
   );
 }
 
-function PeopleList() {
+function PeopleList({ onSelect }) {
   const [people, setPeople] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -354,7 +357,11 @@ function PeopleList() {
             {searchQuery && ' matching your search'}
           </div>
           {filteredPeople.map(person => (
-            <PersonCard key={person.id} person={person} />
+            <PersonCard
+              key={person.id}
+              person={person}
+              onClick={() => onSelect && onSelect(person)}
+            />
           ))}
         </div>
       )}
