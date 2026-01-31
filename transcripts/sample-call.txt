@@ -1,0 +1,21 @@
+Ben: Hi Sarah, thanks for taking the time today.
+
+Sarah: Of course, happy to chat. So you mentioned you're looking at security platforms?
+
+Ben: Yes, exactly. Can you tell me a bit about your current situation?
+
+Sarah: Sure. We had three security breaches last year, which was a wake-up call. The board is really pushing us to fix this. We need to reduce incidents by at least 50%.
+
+Ben: That's significant. Who else is involved in evaluating solutions?
+
+Sarah: Well, I'm leading the technical evaluation. Mike from my team will be doing the hands-on testing. And ultimately our CFO needs to sign off on anything over 50k.
+
+Ben: Got it. What's your timeline looking like?
+
+Sarah: We'd like to have something in place by end of Q2. We're also looking at Competitor X, so we're trying to move relatively quickly.
+
+Ben: Understood. Let me tell you about how our platform handles SSO since you mentioned that's important. We support SAML 2.0 and OIDC out of the box...
+
+Sarah: That's great. Okta integration is a must for us.
+
+Ben: Absolutely, we integrate with Okta, Azure AD, and OneLogin natively. Setup typically takes 2-3 days with your IT team.

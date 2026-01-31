@@ -1,0 +1,26 @@
+{
+  "name": "sales-brain",
+  "version": "0.1.0",
+  "description": "Personal learning and insights engine for sales professionals",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "node src/server.js",
+    "client": "cd src/ui && npm run dev",
+    "db:init": "node src/db/init.js",
+    "watch": "node src/ingestion/watcher.js",
+    "build": "cd src/ui && npm run build"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "better-sqlite3": "^11.7.0",
+    "chokidar": "^4.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "uuid": "^11.0.5"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
