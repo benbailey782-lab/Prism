@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { AlertCircle } from 'lucide-react';
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
@@ -14,6 +15,22 @@ import ProspectList from './components/prospects/ProspectList';
 import ProspectDetail from './components/prospects/ProspectDetail';
 import InsightsDashboard from './components/insights/InsightsDashboard';
 import AskPanel from './components/AskPanel';
+import CaptureModal from './components/CaptureModal';
+
+// Page transition wrapper
+function PageWrapper({ children, viewKey }) {
+  return (
+    <motion.div
+      key={viewKey}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 function App() {
   const [activeView, setActiveView] = useState('ask');
@@ -41,6 +58,14 @@ function App() {
   const handleNavigate = (viewId) => {
     setActiveView(viewId);
     setSelectedItem(null);
+  };
+
+  // Generate a unique key for the current view state
+  const getViewKey = () => {
+    if (selectedItem) {
+      return `${activeView}-detail-${selectedItem.id || 'item'}`;
+    }
+    return activeView;
   };
 
   const renderContent = () => {
@@ -116,7 +141,7 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen flex bg-zinc-950">
+    <div className="min-h-screen flex" style={{ background: 'var(--surface-0)' }}>
       {/* Sidebar */}
       <Sidebar
         activeView={activeView}
@@ -137,22 +162,36 @@ function App() {
         />
 
         {/* Error banner */}
-        {error && (
-          <div className="bg-red-500/10 border-b border-red-500/20 px-6 py-3">
-            <div className="flex items-center gap-3 text-red-400">
-              <AlertCircle className="w-5 h-5" />
-              <span className="text-sm">{error}</span>
-            </div>
-          </div>
-        )}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="bg-red-500/10 border-b border-red-500/20 px-6 py-3"
+            >
+              <div className="flex items-center gap-3 text-red-400">
+                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                <span className="text-sm">{error}</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {/* Main content */}
+        {/* Main content with page transitions */}
         <main className="flex-1 overflow-auto">
           <div className="p-6">
-            {renderContent()}
+            <AnimatePresence mode="wait">
+              <PageWrapper viewKey={getViewKey()}>
+                {renderContent()}
+              </PageWrapper>
+            </AnimatePresence>
           </div>
         </main>
       </div>
+
+      {/* Floating Capture Button */}
+      <CaptureModal />
     </div>
   );
 }

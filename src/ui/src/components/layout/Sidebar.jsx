@@ -1,4 +1,4 @@
-import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Brain,
   ChevronLeft,
@@ -39,24 +39,38 @@ export default function Sidebar({ activeView, onNavigate, collapsed, onToggleCol
   }, {});
 
   return (
-    <aside className={`
-      ${collapsed ? 'w-16' : 'w-64'}
-      bg-zinc-900 border-r border-zinc-800
-      flex flex-col transition-all duration-200
-      sticky top-0 h-screen
-    `}>
+    <motion.aside
+      initial={false}
+      animate={{ width: collapsed ? 72 : 260 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+      className="flex flex-col sticky top-0 h-screen"
+      style={{
+        background: 'var(--surface-1)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderRight: '1px solid var(--glass-border)'
+      }}
+    >
       {/* Logo */}
-      <div className="p-4 border-b border-zinc-800">
+      <div className="p-4 border-b border-white/5">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center flex-shrink-0">
+          <div className="w-11 h-11 rounded-xl animated-gradient flex items-center justify-center flex-shrink-0 shadow-lg">
             <Brain className="w-6 h-6 text-white" />
           </div>
-          {!collapsed && (
-            <div className="overflow-hidden">
-              <h1 className="text-lg font-semibold text-white truncate">Sales Brain</h1>
-              <p className="text-xs text-zinc-500 truncate">Intelligence Engine</p>
-            </div>
-          )}
+          <AnimatePresence mode="wait">
+            {!collapsed && (
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.15 }}
+                className="overflow-hidden"
+              >
+                <h1 className="text-lg font-semibold text-white truncate">Sales Brain</h1>
+                <p className="text-xs text-zinc-500 truncate">Intelligence Engine</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
@@ -64,58 +78,127 @@ export default function Sidebar({ activeView, onNavigate, collapsed, onToggleCol
       <nav className="flex-1 overflow-y-auto py-4">
         {Object.entries(groupedItems).map(([section, sectionItems]) => (
           <div key={section} className="mb-6">
-            {!collapsed && (
-              <div className="px-4 mb-2">
-                <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                  {SECTIONS[section]}
-                </span>
-              </div>
-            )}
+            <AnimatePresence mode="wait">
+              {!collapsed && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.1 }}
+                  className="px-4 mb-2"
+                >
+                  <span className="text-[11px] font-medium text-zinc-500 uppercase tracking-[0.08em]">
+                    {SECTIONS[section]}
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             <div className="space-y-1 px-2">
-              {sectionItems.map(item => (
-                <button
-                  key={item.id}
-                  onClick={() => onNavigate(item.id)}
-                  className={`
-                    w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
-                    transition-colors text-sm font-medium
-                    ${activeView === item.id
-                      ? 'bg-green-500/10 text-green-400'
-                      : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'}
-                  `}
-                  title={collapsed ? item.label : undefined}
-                >
-                  <item.icon className={`w-5 h-5 flex-shrink-0 ${
-                    activeView === item.id ? 'text-green-400' : ''
-                  }`} />
-                  {!collapsed && <span>{item.label}</span>}
-                </button>
-              ))}
+              {sectionItems.map(item => {
+                const isActive = activeView === item.id;
+                return (
+                  <motion.button
+                    key={item.id}
+                    onClick={() => onNavigate(item.id)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={`
+                      w-full flex items-center gap-3 px-3 py-2.5 rounded-xl
+                      transition-all duration-200 text-sm font-medium relative
+                      ${isActive
+                        ? 'text-green-400'
+                        : 'text-zinc-400 hover:text-zinc-200'}
+                    `}
+                    style={isActive ? {
+                      background: 'var(--glow-green)',
+                      boxShadow: 'inset 0 0 20px rgba(34, 197, 94, 0.1)'
+                    } : undefined}
+                    title={collapsed ? item.label : undefined}
+                  >
+                    {/* Active indicator bar */}
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeIndicator"
+                        className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-green-500 rounded-r-full"
+                        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                      />
+                    )}
+
+                    <item.icon className={`w-5 h-5 flex-shrink-0 ${
+                      isActive ? 'text-green-400' : ''
+                    }`} />
+
+                    <AnimatePresence mode="wait">
+                      {!collapsed && (
+                        <motion.span
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -10 }}
+                          transition={{ duration: 0.15 }}
+                        >
+                          {item.label}
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+                  </motion.button>
+                );
+              })}
             </div>
           </div>
         ))}
       </nav>
 
       {/* AI Status */}
-      {!collapsed && health && (
-        <div className="p-4 border-t border-zinc-800">
-          <div className="flex items-center gap-2 text-xs">
-            <div className={`w-2 h-2 rounded-full ${health.aiEnabled ? 'bg-green-500' : 'bg-amber-500'}`} />
-            <span className="text-zinc-400">
-              {health.aiEnabled ? `${health.aiProvider} active` : 'AI inactive'}
-            </span>
-          </div>
+      <AnimatePresence mode="wait">
+        {!collapsed && health && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="p-4 border-t border-white/5"
+          >
+            <div className="flex items-center gap-2">
+              <div className={`
+                w-2 h-2 rounded-full flex-shrink-0
+                ${health.aiEnabled ? 'bg-green-500 pulse-glow' : 'bg-amber-500'}
+              `} />
+              <span className="text-xs text-zinc-400 truncate">
+                {health.aiEnabled
+                  ? `${health.aiProvider || 'AI'} ready`
+                  : 'AI inactive'
+                }
+              </span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Collapsed AI indicator */}
+      {collapsed && health && (
+        <div className="p-4 border-t border-white/5 flex justify-center">
+          <div className={`
+            w-2 h-2 rounded-full
+            ${health.aiEnabled ? 'bg-green-500 pulse-glow' : 'bg-amber-500'}
+          `} />
         </div>
       )}
 
       {/* Collapse toggle */}
-      <button
+      <motion.button
         onClick={onToggleCollapse}
-        className="p-4 border-t border-zinc-800 flex items-center justify-center text-zinc-500 hover:text-zinc-300"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        className="p-4 border-t border-white/5 flex items-center justify-center text-zinc-500 hover:text-zinc-300 transition-colors"
       >
-        {collapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
-      </button>
-    </aside>
+        <motion.div
+          animate={{ rotate: collapsed ? 0 : 180 }}
+          transition={{ duration: 0.2 }}
+        >
+          <ChevronRight className="w-5 h-5" />
+        </motion.div>
+      </motion.button>
+    </motion.aside>
   );
 }

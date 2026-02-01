@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import {
   Users, Plus, User, Building, Mail, Phone,
   Briefcase, UserCheck, UserX, HelpCircle,
   AlertCircle, Filter, Search
 } from 'lucide-react';
+import Modal from './shared/Modal';
 
 const RELATIONSHIP_TYPES = [
   { id: 'all', label: 'All', icon: Users },
@@ -36,8 +38,6 @@ function CreatePersonModal({ isOpen, onClose, onCreate }) {
     notes: ''
   });
 
-  if (!isOpen) return null;
-
   const handleSubmit = (e) => {
     e.preventDefault();
     onCreate(formData);
@@ -45,123 +45,123 @@ function CreatePersonModal({ isOpen, onClose, onCreate }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-zinc-800 rounded-xl border border-zinc-700 w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
-        <h3 className="text-lg font-semibold text-white mb-4">Add New Person</h3>
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <Modal isOpen={isOpen} onClose={onClose} title="Add New Person" size="md">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm text-zinc-400 mb-1">Name *</label>
+          <input
+            type="text"
+            required
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-green-500 transition-colors"
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm text-zinc-400 mb-1">Name *</label>
+            <label className="block text-sm text-zinc-400 mb-1">Role</label>
             <input
               type="text"
-              required
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full bg-zinc-700/50 border border-zinc-600 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-green-500"
+              value={formData.role}
+              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+              placeholder="e.g., VP of Engineering"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-green-500 transition-colors"
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm text-zinc-400 mb-1">Role</label>
-              <input
-                type="text"
-                value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                placeholder="e.g., VP of Engineering"
-                className="w-full bg-zinc-700/50 border border-zinc-600 rounded-lg px-3 py-2 text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-green-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-zinc-400 mb-1">Company</label>
-              <input
-                type="text"
-                value={formData.company}
-                onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                className="w-full bg-zinc-700/50 border border-zinc-600 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-green-500"
-              />
-            </div>
-          </div>
           <div>
-            <label className="block text-sm text-zinc-400 mb-1">Relationship</label>
-            <select
-              value={formData.relationshipType}
-              onChange={(e) => setFormData({ ...formData, relationshipType: e.target.value })}
-              className="w-full bg-zinc-700/50 border border-zinc-600 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-green-500"
-            >
-              <option value="prospect">Prospect</option>
-              <option value="customer">Customer</option>
-              <option value="colleague">Colleague</option>
-              <option value="mentor">Mentor</option>
-              <option value="manager">Manager</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm text-zinc-400 mb-1">Email</label>
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full bg-zinc-700/50 border border-zinc-600 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-green-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-zinc-400 mb-1">Phone</label>
-              <input
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full bg-zinc-700/50 border border-zinc-600 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-green-500"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm text-zinc-400 mb-1">Notes</label>
-            <textarea
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              rows={3}
-              placeholder="Any notes about this person..."
-              className="w-full bg-zinc-700/50 border border-zinc-600 rounded-lg px-3 py-2 text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-green-500"
+            <label className="block text-sm text-zinc-400 mb-1">Company</label>
+            <input
+              type="text"
+              value={formData.company}
+              onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-green-500 transition-colors"
             />
           </div>
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-zinc-100 px-4 py-2 rounded-lg font-medium transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="flex-1 bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-            >
-              Add Person
-            </button>
+        </div>
+        <div>
+          <label className="block text-sm text-zinc-400 mb-1">Relationship</label>
+          <select
+            value={formData.relationshipType}
+            onChange={(e) => setFormData({ ...formData, relationshipType: e.target.value })}
+            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-green-500 transition-colors"
+          >
+            <option value="prospect">Prospect</option>
+            <option value="customer">Customer</option>
+            <option value="colleague">Colleague</option>
+            <option value="mentor">Mentor</option>
+            <option value="manager">Manager</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm text-zinc-400 mb-1">Email</label>
+            <input
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-green-500 transition-colors"
+            />
           </div>
-        </form>
-      </div>
-    </div>
+          <div>
+            <label className="block text-sm text-zinc-400 mb-1">Phone</label>
+            <input
+              type="tel"
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-green-500 transition-colors"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm text-zinc-400 mb-1">Notes</label>
+          <textarea
+            value={formData.notes}
+            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+            rows={3}
+            placeholder="Any notes about this person..."
+            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-green-500 transition-colors resize-none"
+          />
+        </div>
+        <div className="flex gap-3 pt-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 px-4 py-2.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="flex-1 bg-green-600 hover:bg-green-500 text-white px-4 py-2.5 rounded-xl font-medium transition-colors"
+          >
+            Add Person
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 }
 
-function PersonCard({ person, onClick }) {
+function PersonCard({ person, onClick, index = 0 }) {
   const relationshipColor = RELATIONSHIP_COLORS[person.relationship_type] || RELATIONSHIP_COLORS.other;
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05 }}
       onClick={onClick}
-      className="bg-zinc-800/50 rounded-xl border border-zinc-700/50 p-5 hover:bg-zinc-700/30 transition-colors cursor-pointer"
+      className="glass-card-interactive p-5"
     >
       <div className="flex items-start gap-4">
-        <div className="w-12 h-12 rounded-full bg-zinc-700 flex items-center justify-center text-lg font-medium text-zinc-300">
+        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/20 flex items-center justify-center text-lg font-medium text-purple-300">
           {person.name.charAt(0).toUpperCase()}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3">
             <h3 className="font-medium text-white truncate">{person.name}</h3>
-            <span className={`px-2 py-0.5 rounded text-xs font-medium ${relationshipColor}`}>
+            <span className={`px-2 py-0.5 rounded-lg text-xs font-medium ${relationshipColor}`}>
               {person.relationship_type?.replace('_', ' ') || 'other'}
             </span>
           </div>
@@ -185,6 +185,7 @@ function PersonCard({ person, onClick }) {
             {person.email && (
               <a
                 href={`mailto:${person.email}`}
+                onClick={(e) => e.stopPropagation()}
                 className="flex items-center gap-1 hover:text-green-400 transition-colors"
               >
                 <Mail className="w-3.5 h-3.5" />
@@ -194,6 +195,7 @@ function PersonCard({ person, onClick }) {
             {person.phone && (
               <a
                 href={`tel:${person.phone}`}
+                onClick={(e) => e.stopPropagation()}
                 className="flex items-center gap-1 hover:text-green-400 transition-colors"
               >
                 <Phone className="w-3.5 h-3.5" />
@@ -207,7 +209,7 @@ function PersonCard({ person, onClick }) {
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -267,17 +269,26 @@ function PeopleList({ onSelect }) {
   });
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="space-y-6"
+    >
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-semibold text-white">People</h2>
-          <p className="text-sm text-zinc-400 mt-1">
-            Track contacts, colleagues, and relationships
-          </p>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center glow-purple">
+            <Users className="w-6 h-6 text-purple-400" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold text-white">People</h2>
+            <p className="text-sm text-zinc-400">
+              Track contacts, colleagues, and relationships
+            </p>
+          </div>
         </div>
         <button
           onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+          className="flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white px-4 py-2.5 rounded-xl font-medium transition-colors"
         >
           <Plus className="w-4 h-4" />
           Add Person
@@ -298,11 +309,11 @@ function PeopleList({ onSelect }) {
               key={type.id}
               onClick={() => setSelectedType(type.id)}
               className={`
-                flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium
-                transition-colors border
+                flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-medium
+                transition-all border
                 ${isActive
-                  ? 'bg-green-500/20 text-green-400 border-green-500/50'
-                  : 'bg-zinc-800/50 text-zinc-400 border-zinc-700/50 hover:bg-zinc-700/50'
+                  ? 'bg-green-500/20 text-green-400 border-green-500/30 glow-green-subtle'
+                  : 'bg-white/[0.02] text-zinc-400 border-white/5 hover:bg-white/[0.05] hover:text-zinc-200'
                 }
               `}
             >
@@ -318,15 +329,15 @@ function PeopleList({ onSelect }) {
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search people..."
-          className="w-full pl-10 pr-4 py-2 bg-zinc-800/50 border border-zinc-700/50 rounded-lg
+          className="w-full pl-11 pr-4 py-2.5 bg-white/[0.02] border border-white/5 rounded-xl
                      text-sm text-zinc-200 placeholder-zinc-500
-                     focus:outline-none focus:border-green-500/50"
+                     focus:outline-none focus:border-green-500/50 focus:bg-white/[0.04] transition-colors"
         />
       </div>
 
@@ -336,13 +347,15 @@ function PeopleList({ onSelect }) {
           <div className="animate-spin w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full" />
         </div>
       ) : error ? (
-        <div className="text-center py-12">
+        <div className="glass-card p-8 text-center">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <p className="text-red-400">{error}</p>
         </div>
       ) : filteredPeople.length === 0 ? (
-        <div className="text-center py-12">
-          <Users className="w-12 h-12 text-zinc-600 mx-auto mb-4" />
+        <div className="glass-card p-12 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-zinc-800/50 flex items-center justify-center mx-auto mb-4">
+            <Users className="w-8 h-8 text-zinc-600" />
+          </div>
           <p className="text-zinc-400">
             {searchQuery
               ? 'No people match your search'
@@ -356,10 +369,11 @@ function PeopleList({ onSelect }) {
             {filteredPeople.length} {filteredPeople.length === 1 ? 'person' : 'people'}
             {searchQuery && ' matching your search'}
           </div>
-          {filteredPeople.map(person => (
+          {filteredPeople.map((person, index) => (
             <PersonCard
               key={person.id}
               person={person}
+              index={index}
               onClick={() => onSelect && onSelect(person)}
             />
           ))}
@@ -371,7 +385,7 @@ function PeopleList({ onSelect }) {
         onClose={() => setShowCreate(false)}
         onCreate={handleCreate}
       />
-    </div>
+    </motion.div>
   );
 }
 

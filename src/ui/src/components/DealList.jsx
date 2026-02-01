@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import {
   Target, Plus, Building, DollarSign, Calendar,
   ChevronRight, AlertCircle, CheckCircle, Clock
 } from 'lucide-react';
 import DealDetail from './DealDetail';
+import Modal from './shared/Modal';
 
 const STATUS_CONFIG = {
   active: { label: 'Active', color: 'bg-green-500', textColor: 'text-green-400' },
@@ -22,8 +24,6 @@ function CreateDealModal({ isOpen, onClose, onCreate }) {
     notes: ''
   });
 
-  if (!isOpen) return null;
-
   const handleSubmit = (e) => {
     e.preventDefault();
     onCreate({
@@ -34,91 +34,88 @@ function CreateDealModal({ isOpen, onClose, onCreate }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-zinc-800 rounded-xl border border-zinc-700 w-full max-w-md p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Create New Deal</h3>
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <Modal isOpen={isOpen} onClose={onClose} title="Create New Deal" size="md">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm text-zinc-400 mb-1">Company Name *</label>
+          <input
+            type="text"
+            required
+            value={formData.companyName}
+            onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-green-500 transition-colors"
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm text-zinc-400 mb-1">Company Name *</label>
+            <label className="block text-sm text-zinc-400 mb-1">Contact Name</label>
             <input
               type="text"
-              required
-              value={formData.companyName}
-              onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-              className="w-full bg-zinc-700/50 border border-zinc-600 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-green-500"
+              value={formData.contactName}
+              onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-green-500 transition-colors"
             />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm text-zinc-400 mb-1">Contact Name</label>
-              <input
-                type="text"
-                value={formData.contactName}
-                onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
-                className="w-full bg-zinc-700/50 border border-zinc-600 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-green-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-zinc-400 mb-1">Contact Role</label>
-              <input
-                type="text"
-                value={formData.contactRole}
-                onChange={(e) => setFormData({ ...formData, contactRole: e.target.value })}
-                className="w-full bg-zinc-700/50 border border-zinc-600 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-green-500"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm text-zinc-400 mb-1">Deal Value ($)</label>
-              <input
-                type="number"
-                value={formData.valueAmount}
-                onChange={(e) => setFormData({ ...formData, valueAmount: e.target.value })}
-                className="w-full bg-zinc-700/50 border border-zinc-600 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-green-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-zinc-400 mb-1">Status</label>
-              <select
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full bg-zinc-700/50 border border-zinc-600 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-green-500"
-              >
-                <option value="active">Active</option>
-                <option value="won">Won</option>
-                <option value="lost">Lost</option>
-                <option value="stalled">Stalled</option>
-              </select>
-            </div>
           </div>
           <div>
-            <label className="block text-sm text-zinc-400 mb-1">Notes</label>
-            <textarea
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              rows={3}
-              className="w-full bg-zinc-700/50 border border-zinc-600 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-green-500"
+            <label className="block text-sm text-zinc-400 mb-1">Contact Role</label>
+            <input
+              type="text"
+              value={formData.contactRole}
+              onChange={(e) => setFormData({ ...formData, contactRole: e.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-green-500 transition-colors"
             />
           </div>
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-zinc-100 px-4 py-2 rounded-lg font-medium transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="flex-1 bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-            >
-              Create Deal
-            </button>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm text-zinc-400 mb-1">Deal Value ($)</label>
+            <input
+              type="number"
+              value={formData.valueAmount}
+              onChange={(e) => setFormData({ ...formData, valueAmount: e.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-green-500 transition-colors"
+            />
           </div>
-        </form>
-      </div>
-    </div>
+          <div>
+            <label className="block text-sm text-zinc-400 mb-1">Status</label>
+            <select
+              value={formData.status}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-green-500 transition-colors"
+            >
+              <option value="active">Active</option>
+              <option value="won">Won</option>
+              <option value="lost">Lost</option>
+              <option value="stalled">Stalled</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm text-zinc-400 mb-1">Notes</label>
+          <textarea
+            value={formData.notes}
+            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+            rows={3}
+            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-green-500 transition-colors resize-none"
+          />
+        </div>
+        <div className="flex gap-3 pt-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 px-4 py-2.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="flex-1 bg-green-600 hover:bg-green-500 text-white px-4 py-2.5 rounded-xl font-medium transition-colors"
+          >
+            Create Deal
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 }
 
@@ -155,17 +152,20 @@ function MeddpiccProgress({ meddpicc }) {
   );
 }
 
-function DealCard({ deal, onClick }) {
+function DealCard({ deal, onClick, index = 0 }) {
   const statusConfig = STATUS_CONFIG[deal.status] || STATUS_CONFIG.active;
 
   return (
-    <button
+    <motion.button
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05 }}
       onClick={onClick}
-      className="w-full bg-zinc-800/50 rounded-xl border border-zinc-700/50 p-5 hover:bg-zinc-700/30 transition-colors text-left"
+      className="w-full glass-card-interactive p-5 text-left"
     >
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-3">
-          <div className="p-2 rounded-lg bg-amber-500/20">
+          <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
             <Building className="w-5 h-5 text-amber-400" />
           </div>
           <div>
@@ -182,7 +182,7 @@ function DealCard({ deal, onClick }) {
 
       <div className="mt-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusConfig.color}/20 ${statusConfig.textColor}`}>
+          <span className={`px-2 py-0.5 rounded-lg text-xs font-medium ${statusConfig.color}/20 ${statusConfig.textColor}`}>
             {statusConfig.label}
           </span>
           {deal.value_amount && (
@@ -194,7 +194,7 @@ function DealCard({ deal, onClick }) {
         </div>
         <MeddpiccProgress meddpicc={deal.meddpicc} />
       </div>
-    </button>
+    </motion.button>
   );
 }
 
@@ -270,17 +270,26 @@ function DealList({ onSelect }) {
   }
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="space-y-6"
+    >
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-semibold text-white">Deals</h2>
-          <p className="text-sm text-zinc-400 mt-1">
-            Track opportunities and MEDDPICC progress
-          </p>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center glow-amber">
+            <Target className="w-6 h-6 text-amber-400" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold text-white">Deals</h2>
+            <p className="text-sm text-zinc-400">
+              Track opportunities and MEDDPICC progress
+            </p>
+          </div>
         </div>
         <button
           onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+          className="flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white px-4 py-2.5 rounded-xl font-medium transition-colors"
         >
           <Plus className="w-4 h-4" />
           New Deal
@@ -292,22 +301,25 @@ function DealList({ onSelect }) {
           <div className="animate-spin w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full" />
         </div>
       ) : error ? (
-        <div className="text-center py-12">
+        <div className="glass-card p-8 text-center">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <p className="text-red-400">{error}</p>
         </div>
       ) : deals.length === 0 ? (
-        <div className="text-center py-12">
-          <Target className="w-12 h-12 text-zinc-600 mx-auto mb-4" />
+        <div className="glass-card p-12 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-zinc-800/50 flex items-center justify-center mx-auto mb-4">
+            <Target className="w-8 h-8 text-zinc-600" />
+          </div>
           <p className="text-zinc-400">No deals yet</p>
           <p className="text-sm text-zinc-500 mt-1">Create your first deal to start tracking</p>
         </div>
       ) : (
         <div className="grid gap-4">
-          {deals.map(deal => (
+          {deals.map((deal, index) => (
             <DealCard
               key={deal.id}
               deal={deal}
+              index={index}
               onClick={() => handleSelectDeal(deal)}
             />
           ))}
@@ -319,7 +331,7 @@ function DealList({ onSelect }) {
         onClose={() => setShowCreate(false)}
         onCreate={handleCreate}
       />
-    </div>
+    </motion.div>
   );
 }
 

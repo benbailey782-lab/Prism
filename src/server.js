@@ -19,6 +19,11 @@ import { initAnalysisJobs } from './learning/analysisJobs.js';
 import { getMeddpiccSummary } from './processing/meddpiccExtractor.js';
 import { getSegmentsForPerson, getSegmentsForDeal } from './db/queries.js';
 
+// Phase 3 imports
+import uploadRoutes from './api/upload.js';
+import { processQuery, getQueryHistory, submitQueryFeedback } from './processing/queryEngine.js';
+import { getLivingSection, getAllSections, regenerateAllSections } from './processing/livingSections.js';
+
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -375,7 +380,7 @@ app.get('/api/people/:id/segments', (req, res) => {
 });
 
 // ============================================
-// ASK (Natural Language Query)
+// ASK (Natural Language Query) - Phase 3 Smart Query Engine
 // ============================================
 
 app.post('/api/ask', async (req, res) => {
@@ -397,62 +402,109 @@ app.post('/api/ask', async (req, res) => {
       return res.status(500).json({ error: 'AI not initialized' });
     }
 
-    // Gather context from the database
-    const deals = queries.getAllDeals();
-    const people = queries.getAllPeople();
-    const recentTranscripts = queries.getAllTranscripts().slice(0, 10);
-    const prospects = queries.getAllProspects ? queries.getAllProspects() : [];
+    // Use the smart query engine
+    const result = await processQuery(query, callAI);
 
-    // Build context for the AI
-    const context = `
-You are Sales Brain, a personal sales intelligence assistant. Answer questions based on the following sales data:
-
-## Active Deals (${deals.length} total)
-${deals.slice(0, 10).map(d => `- ${d.company_name}: $${d.value_amount || 'TBD'}, Status: ${d.status || 'active'}, Contact: ${d.contact_name || 'Unknown'}`).join('\n')}
-
-## Key Contacts (${people.length} total)
-${people.slice(0, 10).map(p => `- ${p.name} (${p.relationship_type || 'contact'}): ${p.role || ''} at ${p.company || 'Unknown company'}`).join('\n')}
-
-## Prospects (${prospects.length} total)
-${prospects.slice(0, 10).map(p => `- ${p.company_name}: Tier ${p.tier || 3}, Score: ${p.score || 0}`).join('\n')}
-
-## Recent Transcripts (${recentTranscripts.length} shown)
-${recentTranscripts.map(t => `- ${t.filename}: ${t.processed ? 'Processed' : 'Pending'}, ${t.segment_count || 0} segments`).join('\n')}
-
-Answer the user's question concisely and helpfully. If you don't have enough information, say so.
-`;
-
-    const prompt = `${context}\n\nUser Question: ${query}\n\nAnswer:`;
-
-    const response = await callAI(prompt, {
-      maxTokens: 500,
-      temperature: 0.7
-    });
-
-    // Extract sources from the response context
-    const sources = [];
-    if (deals.length > 0) sources.push({ type: 'deals', name: `${deals.length} deals` });
-    if (people.length > 0) sources.push({ type: 'people', name: `${people.length} contacts` });
-    if (prospects.length > 0) sources.push({ type: 'prospects', name: `${prospects.length} prospects` });
-
-    res.json({
-      answer: response,
-      sources
-    });
+    res.json(result);
   } catch (err) {
     console.error('Ask error:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
+// Query history endpoints
+app.get('/api/ask/history', (req, res) => {
+  try {
+    const { limit = 20, offset = 0 } = req.query;
+    const history = getQueryHistory({ limit: parseInt(limit), offset: parseInt(offset) });
+    res.json(history);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/ask/:id/feedback', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { feedback } = req.body;
+
+    if (!feedback || !['helpful', 'not_helpful'].includes(feedback)) {
+      return res.status(400).json({ error: 'Feedback must be "helpful" or "not_helpful"' });
+    }
+
+    const result = submitQueryFeedback(id, feedback);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ============================================
-// PHASE 2: MOUNT NEW ROUTES
+// LIVING SECTIONS (AI-Generated Profiles) - Phase 3
+// ============================================
+
+// Get living section for an entity
+app.get('/api/living-sections/:entityType/:entityId/:sectionType', async (req, res) => {
+  try {
+    const { entityType, entityId, sectionType } = req.params;
+
+    const callAI = getCallAI();
+    if (!callAI) {
+      return res.status(400).json({ error: 'AI not available' });
+    }
+
+    const section = await getLivingSection(entityType, entityId, sectionType, callAI);
+    res.json(section);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get all sections for an entity
+app.get('/api/living-sections/:entityType/:entityId', async (req, res) => {
+  try {
+    const { entityType, entityId } = req.params;
+
+    const callAI = getCallAI();
+    if (!callAI) {
+      return res.status(400).json({ error: 'AI not available' });
+    }
+
+    const sections = await getAllSections(entityType, entityId, callAI);
+    res.json(sections);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Force regeneration of all sections for an entity
+app.post('/api/living-sections/:entityType/:entityId/regenerate', async (req, res) => {
+  try {
+    const { entityType, entityId } = req.params;
+
+    const callAI = getCallAI();
+    if (!callAI) {
+      return res.status(400).json({ error: 'AI not available' });
+    }
+
+    const sections = await regenerateAllSections(entityType, entityId, callAI);
+    res.json(sections);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================
+// PHASE 2 & 3: MOUNT NEW ROUTES
 // ============================================
 
 app.use('/api/prospects', prospectRoutes);
 app.use('/api/outreach', outreachRoutes);
 app.use('/api/insights', insightRoutes);
 app.use('/api/learning', learningRoutes);
+
+// Phase 3: Upload routes
+app.use('/api', uploadRoutes);
 
 // ============================================
 // START SERVER

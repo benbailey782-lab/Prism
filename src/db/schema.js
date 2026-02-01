@@ -416,6 +416,39 @@ export function initDatabase() {
   `);
 
   // ============================================
+  // PHASE 3: QUERY ENGINE TABLES
+  // ============================================
+
+  // Query history for the Ask feature
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS query_history (
+      id TEXT PRIMARY KEY,
+      query TEXT NOT NULL,
+      intent TEXT,
+      response TEXT NOT NULL,
+      sources TEXT,
+      response_time_ms INTEGER,
+      feedback TEXT CHECK(feedback IN ('helpful', 'not_helpful', NULL)),
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // Living sections - cached AI-generated profiles
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS living_sections (
+      id TEXT PRIMARY KEY,
+      entity_type TEXT NOT NULL CHECK(entity_type IN ('deal', 'person', 'product', 'global_insights')),
+      entity_id TEXT,
+      section_type TEXT NOT NULL,
+      content TEXT NOT NULL,
+      generated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      data_hash TEXT,
+      is_stale INTEGER DEFAULT 0,
+      UNIQUE(entity_type, entity_id, section_type)
+    )
+  `);
+
+  // ============================================
   // INDEXES
   // ============================================
   
@@ -449,6 +482,15 @@ export function initDatabase() {
     CREATE INDEX IF NOT EXISTS idx_insights_type ON insights(insight_type);
     CREATE INDEX IF NOT EXISTS idx_insights_status ON insights(status);
     CREATE INDEX IF NOT EXISTS idx_outcomes_entity ON outcomes(entity_type, entity_id);
+  `);
+
+  // ============================================
+  // PHASE 3 INDEXES
+  // ============================================
+
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_query_history_created ON query_history(created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_living_sections_entity ON living_sections(entity_type, entity_id);
   `);
 
   // Seed defaults after table creation

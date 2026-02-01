@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  FileText, Layers, Users, Target, TrendingUp, 
+import { motion } from 'framer-motion';
+import {
+  FileText, Layers, Users, Target, TrendingUp,
   Clock, Mic, MessageSquare, AlertCircle, CheckCircle,
-  Package, Settings, Lightbulb, HelpCircle, Coffee
+  Package, Settings, Lightbulb, HelpCircle, Coffee, Brain, Sparkles
 } from 'lucide-react';
+import StatCard from './shared/StatCard';
 
 const KNOWLEDGE_TYPE_CONFIG = {
   product_knowledge: { label: 'Product', icon: Package, color: 'bg-blue-500' },
@@ -16,25 +18,6 @@ const KNOWLEDGE_TYPE_CONFIG = {
   small_talk: { label: 'Small Talk', icon: Coffee, color: 'bg-zinc-500' },
   unknown: { label: 'Unknown', icon: HelpCircle, color: 'bg-zinc-600' },
 };
-
-function StatCard({ icon: Icon, label, value, subtext, color = 'green' }) {
-  return (
-    <div className="bg-zinc-800/50 rounded-xl border border-zinc-700/50 p-5">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm text-zinc-400">{label}</p>
-          <p className="text-3xl font-semibold text-white mt-1">{value}</p>
-          {subtext && (
-            <p className="text-xs text-zinc-500 mt-1">{subtext}</p>
-          )}
-        </div>
-        <div className={`p-2.5 rounded-lg bg-${color}-500/20`}>
-          <Icon className={`w-5 h-5 text-${color}-400`} />
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function KnowledgeDistribution({ data }) {
   if (!data || Object.keys(data).length === 0) {
@@ -92,10 +75,13 @@ function RecentActivity({ transcripts }) {
 
   return (
     <div className="space-y-3">
-      {transcripts.slice(0, 5).map(transcript => (
-        <div 
+      {transcripts.slice(0, 5).map((transcript, index) => (
+        <motion.div
           key={transcript.id}
-          className="flex items-start gap-3 p-3 bg-zinc-800/30 rounded-lg"
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: index * 0.05 }}
+          className="flex items-start gap-3 p-3 bg-white/[0.02] rounded-lg hover:bg-white/[0.04] transition-colors"
         >
           <div className={`p-1.5 rounded ${transcript.processed_at ? 'bg-green-500/20' : 'bg-amber-500/20'}`}>
             {transcript.processed_at ? (
@@ -107,12 +93,12 @@ function RecentActivity({ transcripts }) {
           <div className="flex-1 min-w-0">
             <p className="text-sm text-zinc-200 truncate">{transcript.filename}</p>
             <p className="text-xs text-zinc-500 mt-0.5">
-              {transcript.processed_at 
+              {transcript.processed_at
                 ? `Processed ${new Date(transcript.processed_at).toLocaleDateString()}`
                 : 'Pending processing'}
             </p>
           </div>
-        </div>
+        </motion.div>
       ))}
     </div>
   );
@@ -228,106 +214,153 @@ function StatsPanel() {
   const pendingCount = transcripts.length - processedCount;
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="space-y-6"
+    >
       {/* Header */}
-      <div>
-        <h2 className="text-xl font-semibold text-white">Dashboard</h2>
-        <p className="text-sm text-zinc-400 mt-1">
-          Overview of your sales learning progress
-        </p>
+      <div className="flex items-center gap-4">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center glow-green-subtle">
+          <Brain className="w-6 h-6 text-green-400" />
+        </div>
+        <div>
+          <h2 className="text-xl font-semibold text-white">Dashboard</h2>
+          <p className="text-sm text-zinc-400">
+            Overview of your sales learning progress
+          </p>
+        </div>
       </div>
 
       {/* AI Status Banner */}
       {health && !health.aiEnabled && (
-        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-amber-400 mt-0.5" />
-          <div>
-            <p className="text-sm text-amber-200 font-medium">AI Processing Disabled</p>
-            <p className="text-xs text-amber-300/70 mt-1">
-              Start Ollama to enable AI features: <code className="bg-amber-500/20 px-1.5 py-0.5 rounded">ollama serve</code>
-            </p>
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-card p-4 border-l-2 border-l-amber-500"
+        >
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-amber-400 mt-0.5" />
+            <div>
+              <p className="text-sm text-amber-200 font-medium">AI Processing Disabled</p>
+              <p className="text-xs text-amber-300/70 mt-1">
+                Start Ollama to enable AI features: <code className="bg-amber-500/20 px-1.5 py-0.5 rounded">ollama serve</code>
+              </p>
+            </div>
           </div>
-        </div>
+        </motion.div>
       )}
 
       {health && health.aiEnabled && (
-        <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 flex items-start gap-3">
-          <CheckCircle className="w-5 h-5 text-green-400 mt-0.5" />
-          <div>
-            <p className="text-sm text-green-200 font-medium">AI Ready</p>
-            <p className="text-xs text-green-300/70 mt-1">
-              {health.aiProvider}: {health.aiModel}
-            </p>
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-card p-4 border-l-2 border-l-green-500"
+        >
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-green-400" />
+            </div>
+            <div>
+              <p className="text-sm text-green-200 font-medium">AI Ready</p>
+              <p className="text-xs text-green-300/70 mt-1">
+                {health.aiProvider}: {health.aiModel}
+              </p>
+            </div>
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard 
+        <StatCard
           icon={FileText}
           label="Transcripts"
           value={stats?.totalTranscripts || 0}
           subtext={pendingCount > 0 ? `${pendingCount} pending` : 'All processed'}
           color="green"
+          delay={0}
         />
-        <StatCard 
+        <StatCard
           icon={Layers}
           label="Segments"
           value={stats?.totalSegments || 0}
           subtext="Knowledge chunks"
           color="blue"
+          delay={0.05}
         />
-        <StatCard 
+        <StatCard
           icon={Users}
           label="People"
           value={stats?.totalPeople || 0}
           subtext="Tracked contacts"
           color="purple"
+          delay={0.1}
         />
-        <StatCard 
+        <StatCard
           icon={Target}
           label="Deals"
           value={stats?.totalDeals || 0}
           subtext="Active opportunities"
           color="amber"
+          delay={0.15}
         />
       </div>
 
       {/* Two Column Layout */}
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Knowledge Distribution */}
-        <div className="bg-zinc-800/50 rounded-xl border border-zinc-700/50 p-5">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="glass-card p-5"
+        >
           <h3 className="text-sm font-medium text-zinc-300 mb-4">
             Knowledge Distribution
           </h3>
           <KnowledgeDistribution data={stats?.segmentsByType} />
-        </div>
+        </motion.div>
 
         {/* Average Talk Ratio */}
-        <div className="bg-zinc-800/50 rounded-xl border border-zinc-700/50 p-5">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="glass-card p-5"
+        >
           <h3 className="text-sm font-medium text-zinc-300 mb-4">
             Average Talk Ratio
           </h3>
           <TalkRatioGauge ratio={stats?.avgTalkRatio} />
-        </div>
+        </motion.div>
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-zinc-800/50 rounded-xl border border-zinc-700/50 p-5">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="glass-card p-5"
+      >
         <h3 className="text-sm font-medium text-zinc-300 mb-4">
           Recent Transcripts
         </h3>
         <RecentActivity transcripts={transcripts} />
-      </div>
+      </motion.div>
 
       {/* Quick Actions */}
-      <div className="bg-zinc-800/50 rounded-xl border border-zinc-700/50 p-5">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.35 }}
+        className="glass-card p-5"
+      >
         <h3 className="text-sm font-medium text-zinc-300 mb-4">
           Getting Started
         </h3>
         <div className="grid sm:grid-cols-3 gap-4">
-          <div className="p-4 bg-zinc-700/30 rounded-lg">
+          <div className="p-4 bg-white/[0.02] rounded-xl border border-white/5 hover:bg-white/[0.04] transition-colors">
             <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center mb-3">
               <span className="text-green-400 font-semibold">1</span>
             </div>
@@ -336,7 +369,7 @@ function StatsPanel() {
               Add .txt, .md, or .json files to the watch folder
             </p>
           </div>
-          <div className="p-4 bg-zinc-700/30 rounded-lg">
+          <div className="p-4 bg-white/[0.02] rounded-xl border border-white/5 hover:bg-white/[0.04] transition-colors">
             <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center mb-3">
               <span className="text-green-400 font-semibold">2</span>
             </div>
@@ -345,7 +378,7 @@ function StatsPanel() {
               Segments are extracted and tagged automatically
             </p>
           </div>
-          <div className="p-4 bg-zinc-700/30 rounded-lg">
+          <div className="p-4 bg-white/[0.02] rounded-xl border border-white/5 hover:bg-white/[0.04] transition-colors">
             <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center mb-3">
               <span className="text-green-400 font-semibold">3</span>
             </div>
@@ -355,8 +388,8 @@ function StatsPanel() {
             </p>
           </div>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 

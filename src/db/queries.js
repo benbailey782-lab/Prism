@@ -1389,6 +1389,197 @@ export function linkSegmentToDeal(segmentId, dealId) {
   db.close();
 }
 
+// ============================================
+// PHASE 3: QUERY HISTORY QUERIES
+// ============================================
+
+export function createQueryHistory({ query, intent, response, sources, responseTimeMs }) {
+  const db = getDatabase();
+  const id = uuidv4();
+
+  const stmt = db.prepare(`
+    INSERT INTO query_history (id, query, intent, response, sources, response_time_ms)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `);
+
+  stmt.run(id, query, intent, response, typeof sources === 'string' ? sources : JSON.stringify(sources), responseTimeMs);
+  db.close();
+
+  return id;
+}
+
+export function getQueryHistory({ limit = 20, offset = 0 } = {}) {
+  const db = getDatabase();
+
+  const stmt = db.prepare(`
+    SELECT * FROM query_history
+    ORDER BY created_at DESC
+    LIMIT ? OFFSET ?
+  `);
+
+  const results = stmt.all(limit, offset);
+
+  // Parse sources JSON
+  for (const row of results) {
+    if (row.sources && typeof row.sources === 'string') {
+      try {
+        row.sources = JSON.parse(row.sources);
+      } catch (e) {
+        row.sources = [];
+      }
+    }
+  }
+
+  db.close();
+  return results;
+}
+
+export function getQueryHistoryItem(id) {
+  const db = getDatabase();
+  const result = db.prepare('SELECT * FROM query_history WHERE id = ?').get(id);
+
+  if (result && result.sources && typeof result.sources === 'string') {
+    try {
+      result.sources = JSON.parse(result.sources);
+    } catch (e) {
+      result.sources = [];
+    }
+  }
+
+  db.close();
+  return result;
+}
+
+export function updateQueryFeedback(id, feedback) {
+  const db = getDatabase();
+  db.prepare('UPDATE query_history SET feedback = ? WHERE id = ?').run(feedback, id);
+  db.close();
+}
+
+// ============================================
+// PHASE 3: LIVING SECTIONS QUERIES
+// ============================================
+
+export function getLivingSection(entityType, entityId, sectionType) {
+  const db = getDatabase();
+
+  const stmt = db.prepare(`
+    SELECT * FROM living_sections
+    WHERE entity_type = ? AND (entity_id = ? OR (entity_id IS NULL AND ? IS NULL)) AND section_type = ?
+  `);
+
+  const result = stmt.get(entityType, entityId, entityId, sectionType);
+
+  if (result && result.content && typeof result.content === 'string') {
+    try {
+      result.content = JSON.parse(result.content);
+    } catch (e) {
+      // Keep as string if not valid JSON
+    }
+  }
+
+  db.close();
+  return result;
+}
+
+export function getAllLivingSections(entityType, entityId) {
+  const db = getDatabase();
+
+  const stmt = db.prepare(`
+    SELECT * FROM living_sections
+    WHERE entity_type = ? AND (entity_id = ? OR (entity_id IS NULL AND ? IS NULL))
+    ORDER BY section_type
+  `);
+
+  const results = stmt.all(entityType, entityId, entityId);
+
+  // Parse content JSON
+  for (const row of results) {
+    if (row.content && typeof row.content === 'string') {
+      try {
+        row.content = JSON.parse(row.content);
+      } catch (e) {
+        // Keep as string
+      }
+    }
+  }
+
+  db.close();
+  return results;
+}
+
+export function saveLivingSection({ entityType, entityId, sectionType, content, dataHash }) {
+  const db = getDatabase();
+  const id = uuidv4();
+
+  const contentStr = typeof content === 'string' ? content : JSON.stringify(content);
+
+  const stmt = db.prepare(`
+    INSERT INTO living_sections (id, entity_type, entity_id, section_type, content, data_hash, is_stale)
+    VALUES (?, ?, ?, ?, ?, ?, 0)
+    ON CONFLICT(entity_type, entity_id, section_type) DO UPDATE SET
+      content = excluded.content,
+      data_hash = excluded.data_hash,
+      is_stale = 0,
+      generated_at = CURRENT_TIMESTAMP
+  `);
+
+  stmt.run(id, entityType, entityId, sectionType, contentStr, dataHash);
+  db.close();
+
+  return id;
+}
+
+export function markLivingSectionStale(entityType, entityId, sectionType = null) {
+  const db = getDatabase();
+
+  if (sectionType) {
+    db.prepare(`
+      UPDATE living_sections
+      SET is_stale = 1
+      WHERE entity_type = ? AND (entity_id = ? OR (entity_id IS NULL AND ? IS NULL)) AND section_type = ?
+    `).run(entityType, entityId, entityId, sectionType);
+  } else {
+    db.prepare(`
+      UPDATE living_sections
+      SET is_stale = 1
+      WHERE entity_type = ? AND (entity_id = ? OR (entity_id IS NULL AND ? IS NULL))
+    `).run(entityType, entityId, entityId);
+  }
+
+  db.close();
+}
+
+export function deleteLivingSection(entityType, entityId, sectionType) {
+  const db = getDatabase();
+
+  db.prepare(`
+    DELETE FROM living_sections
+    WHERE entity_type = ? AND (entity_id = ? OR (entity_id IS NULL AND ? IS NULL)) AND section_type = ?
+  `).run(entityType, entityId, entityId, sectionType);
+
+  db.close();
+}
+
+export function getComputedPatterns() {
+  const db = getDatabase();
+  const results = db.prepare('SELECT * FROM computed_patterns ORDER BY computed_at DESC').all();
+
+  // Parse pattern_data JSON
+  for (const row of results) {
+    if (row.pattern_data && typeof row.pattern_data === 'string') {
+      try {
+        row.pattern_data = JSON.parse(row.pattern_data);
+      } catch (e) {
+        row.pattern_data = {};
+      }
+    }
+  }
+
+  db.close();
+  return results;
+}
+
 export default {
   // Transcript queries
   createTranscript,
@@ -1493,5 +1684,19 @@ export default {
 
   // Phase 2: Cadence template queries
   getCadenceTemplates,
-  getDefaultCadenceForTier
+  getDefaultCadenceForTier,
+
+  // Phase 3: Query history queries
+  createQueryHistory,
+  getQueryHistory,
+  getQueryHistoryItem,
+  updateQueryFeedback,
+
+  // Phase 3: Living sections queries
+  getLivingSection,
+  getAllLivingSections,
+  saveLivingSection,
+  markLivingSectionStale,
+  deleteLivingSection,
+  getComputedPatterns
 };
