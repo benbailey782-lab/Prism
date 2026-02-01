@@ -17,6 +17,7 @@ import InsightsDashboard from './components/insights/InsightsDashboard';
 import AskPanel from './components/AskPanel';
 import CaptureModal from './components/CaptureModal';
 import Settings from './components/Settings';
+import SetupWizard from './components/SetupWizard';
 
 // Page transition wrapper
 function PageWrapper({ children, viewKey }) {
@@ -39,6 +40,7 @@ function App() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [health, setHealth] = useState(null);
   const [error, setError] = useState(null);
+  const [setupComplete, setSetupComplete] = useState(true); // default true for web
 
   useEffect(() => {
     // Check API health
@@ -46,6 +48,17 @@ function App() {
       .then(res => res.json())
       .then(data => setHealth(data))
       .catch(err => setError('Cannot connect to server. Is it running?'));
+  }, []);
+
+  useEffect(() => {
+    // Check setup status in Electron
+    if (typeof window !== 'undefined' && window.electronAPI?.isElectron) {
+      window.electronAPI.getConfig().then(config => {
+        if (config && !config.setupComplete) {
+          setSetupComplete(false);
+        }
+      }).catch(() => {});
+    }
   }, []);
 
   const handleSelectItem = (item) => {
@@ -142,6 +155,11 @@ function App() {
         return <AskPanel />;
     }
   };
+
+  // Show setup wizard on first run (Electron only)
+  if (!setupComplete) {
+    return <SetupWizard onComplete={() => setSetupComplete(true)} />;
+  }
 
   return (
     <div className="min-h-screen flex" style={{ background: 'var(--surface-0)' }}>

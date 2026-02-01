@@ -262,6 +262,45 @@ async function calibrateSignalWeights() {
 }
 
 /**
+ * Start the analysis scheduler
+ * Runs analysis on a 30-minute interval
+ * @param {function} callAI - AI calling function (optional, uses stored aiCallFunction if not provided)
+ */
+export function startScheduler(callAI) {
+  const aiFunc = callAI || aiCallFunction;
+
+  // Check every 30 minutes for recommended analysis
+  setInterval(async () => {
+    if (!aiFunc) return;
+    const recommendation = getNextRecommendedAnalysis();
+    if (recommendation.type) {
+      console.log(`[Scheduler] Auto-analysis: ${recommendation.type} — ${recommendation.reason}`);
+      try {
+        await triggerAnalysis(recommendation.type);
+      } catch (err) {
+        console.error(`[Scheduler] Analysis failed:`, err.message);
+      }
+    }
+  }, 30 * 60 * 1000);
+
+  // Run initial check after 60 second delay
+  setTimeout(async () => {
+    if (!aiFunc) return;
+    const recommendation = getNextRecommendedAnalysis();
+    if (recommendation.type) {
+      console.log(`[Scheduler] Startup analysis: ${recommendation.type}`);
+      try {
+        await triggerAnalysis(recommendation.type);
+      } catch (err) {
+        console.error(`[Scheduler] Startup analysis failed:`, err.message);
+      }
+    }
+  }, 60 * 1000);
+
+  console.log('[Scheduler] Analysis scheduler started (30 min interval)');
+}
+
+/**
  * Get current learning engine status
  */
 export function getLearningStatus() {
@@ -296,6 +335,7 @@ function getNextRecommendedAnalysis() {
 
 export default {
   initAnalysisJobs,
+  startScheduler,
   runDailyAnalysis,
   runWeeklyAnalysis,
   triggerAnalysis,

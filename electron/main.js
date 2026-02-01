@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import { spawn } from 'child_process';
+import { initializeOllama, startHealthMonitor } from './ollama-manager.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -310,8 +311,17 @@ async function initialize() {
     updateSplashStatus('Starting server...');
     const port = await startServer(config);
 
-    updateSplashStatus('Checking AI connection...');
-    await new Promise(r => setTimeout(r, 500));
+    updateSplashStatus('Looking for Ollama...');
+    const ollamaStatus = await initializeOllama();
+
+    if (ollamaStatus.running && ollamaStatus.modelAvailable) {
+      updateSplashStatus('Ollama connected — ' + config.ollamaModel + ' ✓');
+    } else if (ollamaStatus.running && !ollamaStatus.modelAvailable) {
+      updateSplashStatus('Ollama connected — model not found');
+    } else {
+      updateSplashStatus('Ollama not found — AI features disabled');
+    }
+    await new Promise(r => setTimeout(r, 1000));
 
     updateSplashStatus('Waiting for server...');
     const healthy = await waitForHealth(port, 30);
@@ -336,6 +346,13 @@ async function initialize() {
       splashWindow.close();
       splashWindow = null;
     }
+
+    // Start Ollama health monitoring (after main window shows)
+    startHealthMonitor((status) => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('ollama-status', status);
+      }
+    });
 
   } catch (err) {
     console.error('Initialization failed:', err);

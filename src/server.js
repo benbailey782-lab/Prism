@@ -7,7 +7,7 @@ import fs from 'fs';
 
 import { initDatabase } from './db/schema.js';
 import * as queries from './db/queries.js';
-import { startWatcher } from './ingestion/watcher.js';
+import { startWatcher, restartWatcher } from './ingestion/watcher.js';
 import { initAI, getAIStatus, processTranscript, getCallAI } from './processing/processor.js';
 
 // Phase 2 imports
@@ -529,15 +529,12 @@ app.put('/api/config/watch-folder', (req, res) => {
     }
 
     // Restart watcher with new folder
-    const { restartWatcher } = require('./ingestion/watcher.js');
-    if (restartWatcher) {
-      restartWatcher(newFolder, {
-        processImmediately: false,
-        onNewFile: ({ transcriptId, filepath }) => {
-          console.log(`API: New transcript ingested: ${transcriptId}`);
-        }
-      });
-    }
+    restartWatcher(newFolder, {
+      processImmediately: false,
+      onNewFile: ({ transcriptId, filepath }) => {
+        console.log(`API: New transcript ingested: ${transcriptId}`);
+      }
+    });
 
     res.json({ success: true, watchFolder: newFolder });
   } catch (err) {
