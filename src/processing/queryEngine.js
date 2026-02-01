@@ -20,61 +20,84 @@ const INTENT_TYPES = {
 };
 
 /**
- * Detect the intent of a user query
+ * Rule-based intent detection — replaces AI call for instant classification.
+ * Matches against known entities in the database for high-precision entity extraction.
  */
-async function detectIntent(query, callAI) {
-  const prompt = `Classify this sales intelligence query into one of these intents:
+function detectIntent(query) {
+  const q = query.toLowerCase().trim();
+  const entities = { companies: [], people: [], meddpicc_letters: [], knowledge_types: [], time_range: null };
 
-- deal_strategy: Questions about specific deals, deal status, strategy, or MEDDPICC (e.g., "Build me a strategy for the Acme deal", "What's the status of my deals?")
-- knowledge_retrieval: Questions about product knowledge, features, how things work (e.g., "How does our SSO work?", "What did we learn about pricing?")
-- people_intel: Questions about specific people, contacts, relationships (e.g., "What did James tell me about procurement?", "Who are my key contacts?")
-- coaching: Questions about performance, talk ratio, patterns, self-improvement (e.g., "What patterns do you see in my calls?", "How's my talk ratio trending?")
-- competitive: Questions about competitors (e.g., "What do I know about Competitor X?")
-- objection: Questions about handling objections (e.g., "How have I handled pricing objections?")
-- general: Anything else
-
-Also extract any entity hints from the query:
-- Company names mentioned
-- Person names mentioned
-- MEDDPICC letters mentioned (M, E, D1, D2, P, I, C1, C2)
-- Knowledge types mentioned
-- Time ranges mentioned
-
-Query: "${query}"
-
-Respond ONLY with valid JSON:
-{
-  "intent": "deal_strategy",
-  "confidence": 0.9,
-  "entities": {
-    "companies": ["Acme Corp"],
-    "people": ["James"],
-    "meddpicc_letters": ["M", "E"],
-    "knowledge_types": [],
-    "time_range": null
-  }
-}`;
-
+  // --- Entity extraction from DB (fast: SQLite lookups are <1ms) ---
   try {
-    const response = await callAI(prompt, { maxTokens: 500, temperature: 0.3 });
-
-    // Extract JSON from response
-    let jsonStr = response;
-    const codeBlockMatch = response.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (codeBlockMatch) {
-      jsonStr = codeBlockMatch[1];
-    } else {
-      const jsonMatch = response.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        jsonStr = jsonMatch[0];
+    const allDeals = queries.getAllDeals();
+    for (const deal of allDeals) {
+      if (deal.company_name && q.includes(deal.company_name.toLowerCase())) {
+        entities.companies.push(deal.company_name);
       }
     }
-
-    return JSON.parse(jsonStr);
+    const allPeople = queries.getAllPeople();
+    for (const person of allPeople) {
+      if (person.name && q.includes(person.name.toLowerCase())) {
+        entities.people.push(person.name);
+      }
+    }
   } catch (err) {
-    console.error('Intent detection failed:', err.message);
-    return { intent: INTENT_TYPES.GENERAL, confidence: 0.5, entities: {} };
+    console.error('Entity extraction error:', err.message);
   }
+
+  // --- MEDDPICC letter extraction ---
+  const meddpiccPatterns = [
+    { letter: 'M', pattern: /\bmetrics?\b/ },
+    { letter: 'E', pattern: /\beconomic buyer\b/ },
+    { letter: 'D1', pattern: /\bdecision criteria\b/ },
+    { letter: 'D2', pattern: /\bdecision process\b/ },
+    { letter: 'P', pattern: /\bpaper process\b/ },
+    { letter: 'I', pattern: /\bidentified pain\b|\bpain\b/ },
+    { letter: 'C1', pattern: /\bchampion\b/ },
+    { letter: 'C2', pattern: /\bcompetition\b|\bcompetitor\b/ }
+  ];
+  for (const { letter, pattern } of meddpiccPatterns) {
+    if (pattern.test(q)) entities.meddpicc_letters.push(letter);
+  }
+  if (/\bmeddpicc\b/i.test(q)) {
+    entities.meddpicc_letters = ['M', 'E', 'D1', 'D2', 'P', 'I', 'C1', 'C2'];
+  }
+
+  // --- Intent classification by keyword matching ---
+  // Order matters: more specific intents first
+
+  // People intent — if a known person name was found, or people-related keywords
+  if (entities.people.length > 0 || /\bwho\b|contacts?|stakeholders?|relationship|person|people\b/.test(q)) {
+    return { intent: INTENT_TYPES.PEOPLE_INTEL, confidence: 0.85, entities };
+  }
+
+  // Objection handling
+  if (/\bobjections?|pushback|concerns?|overcome|handle|pricing objection\b/.test(q)) {
+    return { intent: INTENT_TYPES.OBJECTION, confidence: 0.85, entities };
+  }
+
+  // Competitive intelligence
+  if (/\bcompetitors?|competitive|versus\b|\bvs\.?\b|\bcompete\b/.test(q)) {
+    return { intent: INTENT_TYPES.COMPETITIVE, confidence: 0.85, entities };
+  }
+
+  // Coaching / performance
+  if (/\btalk ratio|coaching|patterns?|performance|improve|trending|my calls\b/.test(q)) {
+    return { intent: INTENT_TYPES.COACHING, confidence: 0.85, entities };
+  }
+
+  // Deal strategy — if a known company was found, or deal-related keywords
+  if (entities.companies.length > 0 || /\bdeal|strategy|pipeline|close|qualify|meddpicc|forecast|stage\b/.test(q)) {
+    return { intent: INTENT_TYPES.DEAL_STRATEGY, confidence: 0.85, entities };
+  }
+
+  // Knowledge retrieval
+  if (/\bhow does|how do|feature|product|pricing|integration|sso|api\b/.test(q)) {
+    return { intent: INTENT_TYPES.KNOWLEDGE_RETRIEVAL, confidence: 0.80, entities };
+  }
+
+  // Default: general
+  return { intent: INTENT_TYPES.GENERAL, confidence: 0.6, entities };
 }
 
 /**
@@ -302,9 +325,9 @@ function buildSynthesisPrompt(query, intent, context, sources) {
   // Add segments context
   if (context.segments.length > 0) {
     contextText += '\n## Relevant Knowledge\n';
-    for (const seg of context.segments.slice(0, 10)) {
+    for (const seg of context.segments.slice(0, 5)) {
       const source = seg.transcript_filename || 'Unknown source';
-      contextText += `- [Source: ${source}, ${seg.id}] ${seg.summary || seg.content?.substring(0, 150) || 'No content'}\n`;
+      contextText += `- [Source: ${source}] ${seg.summary || seg.content?.substring(0, 100) || 'No content'}\n`;
     }
   }
 
@@ -339,9 +362,9 @@ function buildSynthesisPrompt(query, intent, context, sources) {
     }
   }
 
-  // Cap context to roughly 3000 tokens (~12000 chars)
-  if (contextText.length > 12000) {
-    contextText = contextText.substring(0, 12000) + '\n...[context truncated]';
+  // Cap context to roughly 1500 tokens (~6000 chars) for faster inference
+  if (contextText.length > 6000) {
+    contextText = contextText.substring(0, 6000) + '\n...[context truncated]';
   }
 
   const intentInstructions = {
@@ -434,8 +457,8 @@ export async function processQuery(query, callAI) {
   const startTime = Date.now();
 
   try {
-    // Step 1: Detect intent
-    const intent = await detectIntent(query, callAI);
+    // Step 1: Detect intent (rule-based, instant)
+    const intent = detectIntent(query);
 
     // Step 2: Retrieve relevant context
     const { context, sources } = retrieveContext(intent, intent.entities || {});
@@ -502,8 +525,68 @@ export function submitQueryFeedback(queryId, feedback) {
   return { success: true };
 }
 
+/**
+ * Streaming query pipeline — yields SSE events as tokens arrive.
+ * Intent detection is rule-based (instant). Synthesis is streamed from Ollama.
+ */
+export async function* processQueryStream(query, callAI, streamAI) {
+  const startTime = Date.now();
+
+  try {
+    // Step 1: Instant rule-based intent detection
+    const intent = detectIntent(query);
+
+    // Step 2: Retrieve context (all sync DB calls, <5ms)
+    const { context, sources } = retrieveContext(intent, intent.entities || {});
+
+    // Step 3: Send metadata immediately so UI can render sources + intent before tokens arrive
+    yield {
+      type: 'meta',
+      intent: intent.intent,
+      intentConfidence: intent.confidence,
+      sources: sources,
+      followUpQuestions: generateFollowUps(intent, context),
+      visualizations: extractVisualizations(intent, context)
+    };
+
+    // Step 4: Build synthesis prompt and stream the response
+    const synthesisPrompt = buildSynthesisPrompt(query, intent, context, sources);
+    let fullAnswer = '';
+
+    for await (const token of streamAI(synthesisPrompt, { maxTokens: 1500, temperature: 0.7 })) {
+      fullAnswer += token;
+      yield { type: 'token', token };
+    }
+
+    const responseTimeMs = Date.now() - startTime;
+
+    // Step 5: Save to history after streaming completes
+    const historyId = queries.createQueryHistory({
+      query,
+      intent: intent.intent,
+      response: fullAnswer,
+      sources,
+      responseTimeMs
+    });
+
+    yield { type: 'done', id: historyId, responseTimeMs };
+
+  } catch (err) {
+    console.error('Stream query failed:', err);
+    const responseTimeMs = Date.now() - startTime;
+    queries.createQueryHistory({
+      query, intent: 'error',
+      response: `Error: ${err.message}`,
+      sources: [],
+      responseTimeMs
+    });
+    yield { type: 'error', error: err.message };
+  }
+}
+
 export default {
   processQuery,
+  processQueryStream,
   getQueryHistory,
   submitQueryFeedback,
   INTENT_TYPES

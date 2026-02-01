@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertCircle } from 'lucide-react';
 import Sidebar from './components/layout/Sidebar';
-import Header from './components/layout/Header';
 import TranscriptList from './components/TranscriptList';
 import TranscriptDetail from './components/TranscriptDetail';
 import SegmentBrowser from './components/SegmentBrowser';
@@ -135,7 +134,7 @@ function App() {
     // Main list/panel views
     switch (activeView) {
       case 'ask':
-        return <AskPanel onOpenCapture={() => setCaptureModalOpen(true)} />;
+        return <AskPanel onOpenCapture={() => setCaptureModalOpen(true)} onNavigate={handleNavigate} onSelectItem={handleSelectItem} />;
       case 'insights':
         return <InsightsDashboard />;
       case 'prospects':
@@ -153,7 +152,7 @@ function App() {
       case 'settings':
         return <Settings />;
       default:
-        return <AskPanel />;
+        return <AskPanel onNavigate={handleNavigate} onSelectItem={handleSelectItem} />;
     }
   };
 
@@ -175,14 +174,6 @@ function App() {
 
       {/* Main content area */}
       <div className="flex-1 flex flex-col min-h-screen overflow-hidden">
-        {/* Header */}
-        <Header
-          health={health}
-          activeView={activeView}
-          showBack={!!selectedItem}
-          onBack={handleBack}
-        />
-
         {/* Error banner */}
         <AnimatePresence>
           {error && (

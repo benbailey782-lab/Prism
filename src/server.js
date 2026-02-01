@@ -8,7 +8,7 @@ import fs from 'fs';
 import { initDatabase } from './db/schema.js';
 import * as queries from './db/queries.js';
 import { startWatcher, restartWatcher } from './ingestion/watcher.js';
-import { initAI, getAIStatus, processTranscript, getCallAI } from './processing/processor.js';
+import { initAI, getAIStatus, processTranscript, getCallAI, streamAI } from './processing/processor.js';
 
 // Phase 2 imports
 import prospectRoutes from './api/prospects.js';
@@ -409,6 +409,49 @@ app.post('/api/ask', async (req, res) => {
   } catch (err) {
     console.error('Ask error:', err);
     res.status(500).json({ error: err.message });
+  }
+});
+
+// Streaming ask endpoint (SSE) — preferred by frontend for real-time responses
+app.get('/api/ask/stream', async (req, res) => {
+  try {
+    const query = req.query.q;
+    if (!query) {
+      return res.status(400).json({ error: 'Query parameter q is required' });
+    }
+
+    const aiStatus = getAIStatus();
+    if (!aiStatus.enabled) {
+      return res.status(400).json({ error: 'AI not available' });
+    }
+
+    // Import processQueryStream from queryEngine
+    const { processQueryStream } = await import('./processing/queryEngine.js');
+
+    // Set SSE headers
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no'
+    });
+
+    // Stream the query response
+    const callAI = getCallAI();
+    for await (const event of processQueryStream(query, callAI, streamAI)) {
+      res.write(`data: ${JSON.stringify(event)}\n\n`);
+    }
+
+    res.write('data: [DONE]\n\n');
+    res.end();
+  } catch (err) {
+    console.error('Stream ask error:', err);
+    if (!res.headersSent) {
+      res.status(500).json({ error: err.message });
+    } else {
+      res.write(`data: ${JSON.stringify({ type: 'error', error: err.message })}\n\n`);
+      res.end();
+    }
   }
 });
 

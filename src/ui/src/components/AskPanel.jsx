@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Send, User, Loader2, Sparkles, MessageSquare, Mic, Plus,
+  Send, User, Loader2, Sparkles, Mic, Plus,
   FileText, Target, Users, Lightbulb, AlertCircle, History,
   ThumbsUp, ThumbsDown, ExternalLink, ChevronRight, X, RefreshCw
 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import GlassCard from './shared/GlassCard';
-import { StaggerContainer, StaggerItem } from './shared/PageTransition';
 
 // Prism Logo Mark SVG component
 const PrismLogo = ({ className = "w-6 h-6" }) => (
@@ -31,33 +32,23 @@ const PrismLogo = ({ className = "w-6 h-6" }) => (
   </svg>
 );
 
-// Suggested questions - will be enhanced with contextual suggestions
-const DEFAULT_SUGGESTIONS = [
-  { icon: Target, text: "What's the status of my active deals?", category: 'deals' },
-  { icon: Users, text: "Who are my key contacts at each account?", category: 'people' },
-  { icon: Lightbulb, text: "What patterns do you see in my calls?", category: 'coaching' },
-  { icon: FileText, text: "What objections am I hearing most?", category: 'objection' },
-  { icon: MessageSquare, text: "How's my talk ratio trending?", category: 'coaching' },
-  { icon: Target, text: "What are my biggest MEDDPICC gaps?", category: 'deals' },
+// Compact suggestion chips for the home screen
+const SUGGESTION_CHIPS = [
+  { icon: Target, text: "Deal strategy", fullQuery: "What's the status of my active deals?" },
+  { icon: Users, text: "Key contacts", fullQuery: "Who are my key contacts at each account?" },
+  { icon: Lightbulb, text: "Call patterns", fullQuery: "What patterns do you see in my calls?" },
 ];
 
-export default function AskPanel({ onOpenCapture }) {
+export default function AskPanel({ onOpenCapture, onNavigate, onSelectItem }) {
   const [query, setQuery] = useState('');
-  const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [currentAnswer, setCurrentAnswer] = useState(null); // { question, content, sources, intent, ... }
+  const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState(null);
   const [history, setHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
-  const [suggestions, setSuggestions] = useState(DEFAULT_SUGGESTIONS);
-  const [isListening, setIsListening] = useState(false);
-  const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
-  const askRecognitionRef = useRef(null);
-
-  // Scroll to bottom on new messages
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  const answerRef = useRef(null);
+  const abortRef = useRef(null);
 
   // Load query history
   useEffect(() => {
@@ -76,71 +67,29 @@ export default function AskPanel({ onOpenCapture }) {
     }
   };
 
-  // Load contextual suggestions based on available data
+  // Auto-scroll as tokens stream in
   useEffect(() => {
-    loadContextualSuggestions();
-  }, []);
-
-  const loadContextualSuggestions = async () => {
-    try {
-      // Get stats to determine what data exists
-      const res = await fetch('/api/stats');
-      if (res.ok) {
-        const stats = await res.json();
-        const contextual = [...DEFAULT_SUGGESTIONS];
-
-        // Add deal-specific suggestion if deals exist
-        if (stats.totalDeals > 0) {
-          const dealsRes = await fetch('/api/deals');
-          if (dealsRes.ok) {
-            const deals = await dealsRes.json();
-            if (deals.length > 0) {
-              contextual.unshift({
-                icon: Target,
-                text: `Build me a strategy for the ${deals[0].company_name} deal`,
-                category: 'deals'
-              });
-            }
-          }
-        }
-
-        // Add people-specific suggestion if contacts exist
-        if (stats.totalPeople > 0) {
-          const peopleRes = await fetch('/api/people');
-          if (peopleRes.ok) {
-            const people = await peopleRes.json();
-            if (people.length > 0) {
-              contextual.unshift({
-                icon: Users,
-                text: `What do I know about ${people[0].name}?`,
-                category: 'people'
-              });
-            }
-          }
-        }
-
-        setSuggestions(contextual.slice(0, 6));
-      }
-    } catch (err) {
-      console.error('Failed to load contextual suggestions:', err);
+    if (isStreaming && answerRef.current) {
+      answerRef.current.scrollTop = answerRef.current.scrollHeight;
     }
-  };
+  }, [currentAnswer?.content, isStreaming]);
 
   const handleSubmit = async (e) => {
     e?.preventDefault();
-    if (!query.trim() || loading) return;
+    const q = query.trim();
+    if (!q || isStreaming) return;
 
-    const userMessage = query.trim();
     setQuery('');
     setError(null);
-    setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
-    setLoading(true);
+    setCurrentAnswer({ question: q, content: '', sources: [], intent: null, followUpQuestions: [], visualizations: [], responseTimeMs: null, id: null });
+    setIsStreaming(true);
+
+    const controller = new AbortController();
+    abortRef.current = controller;
 
     try {
-      const res = await fetch('/api/ask', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: userMessage })
+      const res = await fetch(`/api/ask/stream?q=${encodeURIComponent(q)}`, {
+        signal: controller.signal
       });
 
       if (!res.ok) {
@@ -148,42 +97,99 @@ export default function AskPanel({ onOpenCapture }) {
         throw new Error(data.error || 'Failed to get response');
       }
 
-      const data = await res.json();
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        id: data.id,
-        content: data.answer,
-        sources: data.sources,
-        followUpQuestions: data.followUpQuestions,
-        visualizations: data.visualizations,
-        intent: data.intent,
-        responseTimeMs: data.responseTimeMs
-      }]);
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
 
-      // Refresh history
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const payload = line.slice(6).trim();
+            if (payload === '[DONE]') continue;
+
+            try {
+              const event = JSON.parse(payload);
+
+              if (event.type === 'meta') {
+                setCurrentAnswer(prev => ({
+                  ...prev,
+                  sources: event.sources || [],
+                  intent: event.intent,
+                  followUpQuestions: event.followUpQuestions || [],
+                  visualizations: event.visualizations || []
+                }));
+              } else if (event.type === 'token') {
+                setCurrentAnswer(prev => ({
+                  ...prev,
+                  content: prev.content + event.token
+                }));
+              } else if (event.type === 'done') {
+                setCurrentAnswer(prev => ({
+                  ...prev,
+                  id: event.id,
+                  responseTimeMs: event.responseTimeMs
+                }));
+              } else if (event.type === 'error') {
+                throw new Error(event.error);
+              }
+            } catch (parseErr) {
+              if (parseErr.message && !parseErr.message.includes('JSON')) throw parseErr;
+            }
+          }
+        }
+      }
+
       loadHistory();
     } catch (err) {
+      if (err.name === 'AbortError') return;
+      console.error('Stream error:', err);
       setError(err.message);
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: 'Sorry, I encountered an error processing your request.',
-        error: true
-      }]);
+      // Fallback to non-streaming endpoint
+      try {
+        const fallbackRes = await fetch('/api/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: q })
+        });
+        if (fallbackRes.ok) {
+          const data = await fallbackRes.json();
+          setCurrentAnswer({
+            question: q,
+            content: data.answer,
+            sources: data.sources || [],
+            intent: data.intent,
+            followUpQuestions: data.followUpQuestions || [],
+            visualizations: data.visualizations || [],
+            responseTimeMs: data.responseTimeMs,
+            id: data.id
+          });
+          setError(null);
+          loadHistory();
+        }
+      } catch (fallbackErr) {
+        setError(fallbackErr.message);
+      }
     } finally {
-      setLoading(false);
+      setIsStreaming(false);
+      abortRef.current = null;
     }
   };
 
-  const handleSuggestionClick = (suggestion) => {
-    setQuery(suggestion);
+  const handleChipClick = (fullQuery) => {
+    setQuery(fullQuery);
     inputRef.current?.focus();
   };
 
   const handleFollowUpClick = (question) => {
     setQuery(question);
-    setTimeout(() => {
-      handleSubmit();
-    }, 100);
+    setTimeout(() => handleSubmit(), 50);
   };
 
   const handleHistoryClick = (item) => {
@@ -194,93 +200,78 @@ export default function AskPanel({ onOpenCapture }) {
 
   const handleFeedback = async (messageId, feedback) => {
     if (!messageId) return;
-
     try {
       await fetch(`/api/ask/${messageId}/feedback`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ feedback })
       });
-
-      // Update local state to show feedback was received
-      setMessages(prev => prev.map(msg =>
-        msg.id === messageId ? { ...msg, feedback } : msg
-      ));
+      setCurrentAnswer(prev => prev ? { ...prev, feedback } : prev);
     } catch (err) {
       console.error('Failed to submit feedback:', err);
     }
   };
 
-  const clearConversation = () => {
-    setMessages([]);
+  const handleNewQuestion = () => {
+    setCurrentAnswer(null);
     setError(null);
+    inputRef.current?.focus();
   };
 
-  const toggleVoiceInput = useCallback(() => {
-    if (isListening) {
-      if (askRecognitionRef.current) {
-        askRecognitionRef.current.stop();
+  const handleSourceClick = async (source) => {
+    if (!onNavigate || !onSelectItem) return;
+    try {
+      if (source.type === 'deal' && source.id) {
+        const res = await fetch(`/api/deals/${source.id}`);
+        if (res.ok) {
+          const deal = await res.json();
+          onNavigate('deals');
+          onSelectItem(deal);
+        }
+      } else if (source.type === 'person' && source.id) {
+        const res = await fetch(`/api/people/${source.id}`);
+        if (res.ok) {
+          const person = await res.json();
+          onNavigate('people');
+          onSelectItem(person);
+        }
+      } else if ((source.type === 'transcript' || source.type === 'segment') && source.id) {
+        // For segments, navigate to the transcript list — the user can find it from there
+        onNavigate('transcripts');
       }
-      setIsListening(false);
-      return;
+    } catch (err) {
+      console.error('Source navigation error:', err);
     }
+  };
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) return;
-
-    const recognition = new SpeechRecognition();
-    recognition.continuous = false; // Single utterance — this is a query, not a memo
-    recognition.interimResults = false;
-    recognition.lang = 'en-US';
-
-    recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      setQuery(prev => prev ? prev + ' ' + transcript : transcript);
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-    };
-
-    recognition.onerror = (event) => {
-      console.error('Voice input error:', event.error);
-      setIsListening(false);
-    };
-
-    askRecognitionRef.current = recognition;
-    recognition.start();
-    setIsListening(true);
-  }, [isListening]);
+  const showEmptyState = !currentAnswer && !isStreaming;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)]">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6">
+    <div className="flex flex-col h-[calc(100vh-5rem)]">
+      {/* Header row */}
+      <div className="flex items-start justify-between mb-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-white">Ask Prism</h1>
           <p className="text-sm text-zinc-400 mt-1">
             Ask questions about your deals, contacts, and sales insights
           </p>
         </div>
-
         <div className="flex items-center gap-2">
-          {messages.length > 0 && (
+          {currentAnswer && !isStreaming && (
             <motion.button
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              onClick={clearConversation}
-              className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
-              title="Clear conversation"
+              onClick={handleNewQuestion}
+              className="px-3 py-1.5 rounded-xl text-xs font-medium text-prism-blue bg-prism-blue/10 hover:bg-prism-blue/20 transition-colors flex items-center gap-1.5"
             >
-              <RefreshCw className="w-5 h-5" />
+              <RefreshCw className="w-3.5 h-3.5" />
+              New question
             </motion.button>
           )}
           <button
             onClick={() => setShowHistory(!showHistory)}
             className={`p-2 rounded-xl transition-colors ${
-              showHistory
-                ? 'bg-prism-blue/10 text-prism-blue'
-                : 'text-zinc-400 hover:text-white hover:bg-white/5'
+              showHistory ? 'bg-prism-blue/10 text-prism-blue' : 'text-zinc-400 hover:text-white hover:bg-white/5'
             }`}
             title="Query history"
           >
@@ -291,33 +282,170 @@ export default function AskPanel({ onOpenCapture }) {
 
       {/* Main content area */}
       <div className="flex-1 flex gap-4 overflow-hidden">
-        {/* Messages area */}
-        <div className="flex-1 overflow-y-auto space-y-4">
+        {/* Answer / Empty state area */}
+        <div ref={answerRef} className="flex-1 overflow-y-auto">
           <AnimatePresence mode="wait">
-            {messages.length === 0 ? (
-              <EmptyState
-                suggestions={suggestions}
-                onSuggestionClick={handleSuggestionClick}
-              />
-            ) : (
+            {showEmptyState ? (
+              /* ---- EMPTY STATE ---- */
               <motion.div
+                key="empty"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="flex flex-col items-center justify-center h-full text-center"
+              >
+                {/* Hero icon with glow */}
+                <div className="relative mb-6">
+                  <motion.div
+                    animate={{ opacity: [0.4, 0.75, 0.4], scale: [1, 1.15, 1] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                    className="absolute -inset-10 blur-2xl pointer-events-none"
+                    style={{ background: 'radial-gradient(ellipse at center, rgba(74, 168, 216, 0.35) 0%, rgba(96, 120, 200, 0.25) 35%, rgba(152, 120, 192, 0.15) 60%, transparent 85%)' }}
+                  />
+                  <div className="relative w-20 h-20 flex items-center justify-center">
+                    <PrismLogo className="w-14 h-10" />
+                  </div>
+                </div>
+                <h2 className="text-lg font-medium text-white mb-2">
+                  Ask anything about your sales world
+                </h2>
+                <p className="text-sm text-zinc-400 max-w-md mb-6">
+                  Deals, contacts, coaching insights, competitive intel, and more.
+                </p>
+              </motion.div>
+            ) : (
+              /* ---- ANSWER VIEW ---- */
+              <motion.div
+                key="answer"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="space-y-4"
+                className="space-y-4 pb-4"
               >
-                {messages.map((msg, idx) => (
-                  <MessageBubble
-                    key={idx}
-                    message={msg}
-                    onFollowUpClick={handleFollowUpClick}
-                    onFeedback={handleFeedback}
-                  />
-                ))}
-                {loading && <TypingIndicator />}
+                {/* User's question */}
+                <div className="flex gap-3 justify-end">
+                  <div className="max-w-[80%]">
+                    <div className="rounded-xl p-4 bg-prism-500/10 border border-prism-500/20">
+                      <p className="text-sm leading-relaxed text-prism-100">{currentAnswer?.question}</p>
+                    </div>
+                  </div>
+                  <div className="w-9 h-9 rounded-xl bg-zinc-700 flex items-center justify-center flex-shrink-0">
+                    <User className="w-5 h-5 text-zinc-400" />
+                  </div>
+                </div>
+
+                {/* AI response */}
+                <div className="flex gap-3 justify-start">
+                  <div className="w-9 h-9 rounded-xl bg-prism-blue/10 glow-prism flex items-center justify-center flex-shrink-0">
+                    <Sparkles className="w-5 h-5 text-prism-blue" />
+                  </div>
+                  <div className="max-w-[80%] flex-1">
+                    {/* Response content with markdown */}
+                    <div className="rounded-xl p-4 glass-card-static">
+                      {currentAnswer?.content ? (
+                        <div className="prose prose-invert prose-sm max-w-none
+                          prose-headings:text-zinc-100 prose-headings:font-semibold prose-headings:mt-4 prose-headings:mb-2
+                          prose-p:text-zinc-200 prose-p:leading-relaxed prose-p:my-1.5
+                          prose-strong:text-zinc-100
+                          prose-ul:my-2 prose-li:text-zinc-200 prose-li:my-0.5
+                          prose-code:text-prism-blue prose-code:bg-white/5 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
+                          prose-a:text-prism-blue prose-a:no-underline hover:prose-a:underline
+                        ">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {currentAnswer.content}
+                          </ReactMarkdown>
+                          {isStreaming && <span className="typing-cursor" />}
+                        </div>
+                      ) : isStreaming ? (
+                        <div className="flex items-center gap-3 py-2">
+                          <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 0.6, repeat: Infinity, repeatDelay: 0.2 }} className="w-2 h-2 rounded-full bg-prism-blue" />
+                          <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 0.6, repeat: Infinity, repeatDelay: 0.2, delay: 0.15 }} className="w-2 h-2 rounded-full bg-prism-blue" />
+                          <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 0.6, repeat: Infinity, repeatDelay: 0.2, delay: 0.3 }} className="w-2 h-2 rounded-full bg-prism-blue" />
+                          <span className="text-sm text-zinc-400 ml-1">Thinking...</span>
+                        </div>
+                      ) : null}
+
+                      {/* Intent badge + response time */}
+                      {currentAnswer?.intent && !isStreaming && (
+                        <div className="mt-3 pt-3 border-t border-white/5">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 uppercase tracking-wide">
+                            {currentAnswer.intent.replace('_', ' ')}
+                          </span>
+                          {currentAnswer.responseTimeMs && (
+                            <span className="text-[10px] text-zinc-600 ml-2">
+                              {currentAnswer.responseTimeMs}ms
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Sources — clickable */}
+                    {currentAnswer?.sources?.length > 0 && (
+                      <div className="mt-3">
+                        <p className="text-xs text-zinc-500 mb-2">Sources:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {currentAnswer.sources.map((source, idx) => (
+                            <SourceBadge key={idx} source={source} onClick={() => handleSourceClick(source)} />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* MEDDPICC mini visualization */}
+                    {currentAnswer?.visualizations?.some(v => v.type === 'meddpicc_scorecard') && (
+                      <div className="mt-4">
+                        <MeddpiccMini visualization={currentAnswer.visualizations.find(v => v.type === 'meddpicc_scorecard')} />
+                      </div>
+                    )}
+
+                    {/* Follow-up questions */}
+                    {currentAnswer?.followUpQuestions?.length > 0 && !isStreaming && (
+                      <div className="mt-4">
+                        <p className="text-xs text-zinc-500 mb-2">Follow-up questions:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {currentAnswer.followUpQuestions.map((q, idx) => (
+                            <motion.button
+                              key={idx}
+                              onClick={() => handleFollowUpClick(q)}
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              className="px-3 py-1.5 rounded-lg bg-prism-blue/10 text-prism-blue text-xs hover:bg-prism-blue/20 transition-colors"
+                            >
+                              {q}
+                            </motion.button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Feedback buttons */}
+                    {!isStreaming && currentAnswer?.id && (
+                      <div className="mt-3 flex items-center gap-2">
+                        <button
+                          onClick={() => handleFeedback(currentAnswer.id, 'helpful')}
+                          className={`p-1.5 rounded-lg transition-colors ${
+                            currentAnswer.feedback === 'helpful' ? 'bg-prism-blue/20 text-prism-blue' : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'
+                          }`}
+                          title="Helpful"
+                        >
+                          <ThumbsUp className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleFeedback(currentAnswer.id, 'not_helpful')}
+                          className={`p-1.5 rounded-lg transition-colors ${
+                            currentAnswer.feedback === 'not_helpful' ? 'bg-red-500/20 text-red-400' : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'
+                          }`}
+                          title="Not helpful"
+                        >
+                          <ThumbsDown className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
-          <div ref={messagesEndRef} />
         </div>
 
         {/* History sidebar */}
@@ -332,10 +460,7 @@ export default function AskPanel({ onOpenCapture }) {
               <GlassCard variant="static" padding="p-4" className="h-full">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-medium text-white">Recent Queries</h3>
-                  <button
-                    onClick={() => setShowHistory(false)}
-                    className="p-1 text-zinc-500 hover:text-white"
-                  >
+                  <button onClick={() => setShowHistory(false)} className="p-1 text-zinc-500 hover:text-white">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
@@ -347,9 +472,7 @@ export default function AskPanel({ onOpenCapture }) {
                       className="w-full text-left p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
                     >
                       <p className="text-sm text-zinc-300 line-clamp-2">{item.query}</p>
-                      <p className="text-xs text-zinc-500 mt-1">
-                        {new Date(item.created_at).toLocaleDateString()}
-                      </p>
+                      <p className="text-xs text-zinc-500 mt-1">{new Date(item.created_at).toLocaleDateString()}</p>
                     </button>
                   ))}
                 </div>
@@ -366,14 +489,11 @@ export default function AskPanel({ onOpenCapture }) {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className="my-4 p-3 bg-red-500/10 border border-red-500/30 rounded-xl flex items-center gap-3"
+            className="my-3 p-3 bg-red-500/10 border border-red-500/30 rounded-xl flex items-center gap-3"
           >
             <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
             <span className="text-sm text-red-400 flex-1">{error}</span>
-            <button
-              onClick={() => setError(null)}
-              className="text-red-400 hover:text-red-300"
-            >
+            <button onClick={() => setError(null)} className="text-red-400 hover:text-red-300">
               <X className="w-4 h-4" />
             </button>
           </motion.div>
@@ -381,15 +501,11 @@ export default function AskPanel({ onOpenCapture }) {
       </AnimatePresence>
 
       {/* Input area */}
-      <form onSubmit={handleSubmit} className="mt-4">
+      <form onSubmit={handleSubmit} className="mt-3">
         <div
           className="flex items-center gap-2 p-2 rounded-xl transition-colors"
-          style={{
-            background: 'var(--surface-3)',
-            border: '1px solid var(--glass-border)'
-          }}
+          style={{ background: 'var(--surface-3)', border: '1px solid var(--glass-border)' }}
         >
-          {/* + Capture button */}
           {onOpenCapture && (
             <motion.button
               type="button"
@@ -407,295 +523,59 @@ export default function AskPanel({ onOpenCapture }) {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={isListening ? "Listening..." : "Ask a question about your sales data..."}
+            placeholder="Ask a question about your sales data..."
             className="flex-1 bg-transparent px-3 py-2 text-zinc-200 placeholder-zinc-500 focus:outline-none"
-            disabled={loading}
+            disabled={isStreaming}
           />
-          {/* Mic button */}
+          {/* Mic button — disabled until Whisper integration in Phase 5 */}
           <motion.button
             type="button"
-            onClick={toggleVoiceInput}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className={`p-2.5 rounded-xl transition-colors ${
-              isListening
-                ? 'bg-red-500/20 text-red-400'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
-            }`}
-            disabled={loading}
+            className="p-2.5 rounded-xl text-zinc-500 cursor-not-allowed opacity-50"
+            disabled={true}
+            title="Voice input coming soon"
           >
-            {isListening ? (
-              <motion.div
-                animate={{ scale: [1, 1.15, 1] }}
-                transition={{ duration: 1, repeat: Infinity }}
-              >
-                <Mic className="w-5 h-5" />
-              </motion.div>
-            ) : (
-              <Mic className="w-5 h-5" />
-            )}
+            <Mic className="w-5 h-5" />
           </motion.button>
-          {/* Send button */}
           <motion.button
             type="submit"
-            disabled={!query.trim() || loading}
+            disabled={!query.trim() || isStreaming}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className="p-2.5 bg-prism-500 hover:bg-prism-600 disabled:bg-zinc-700 disabled:text-zinc-500 text-white rounded-xl transition-colors"
           >
-            {loading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <Send className="w-5 h-5" />
-            )}
+            {isStreaming ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
           </motion.button>
         </div>
+        {/* Suggestion chips — only show on empty state */}
+        {showEmptyState && (
+          <div className="flex items-center justify-center gap-2 mt-3">
+            {SUGGESTION_CHIPS.map((chip, idx) => {
+              const Icon = chip.icon;
+              return (
+                <button
+                  key={idx}
+                  onClick={() => handleChipClick(chip.fullQuery)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-zinc-400 hover:text-zinc-200 bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 transition-colors"
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {chip.text}
+                </button>
+              );
+            })}
+          </div>
+        )}
         <p className="text-xs text-zinc-600 mt-2 text-center">
-          Powered by AI. Responses are based on your sales data.
+          Powered by AI · Responses are based on your sales data
         </p>
       </form>
     </div>
   );
 }
 
-// Empty state with hero and suggestions
-function EmptyState({ suggestions, onSuggestionClick }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="flex flex-col items-center justify-center h-full text-center"
-    >
-      {/* Hero icon with glow */}
-      <div className="relative mb-6">
-        {/* Glow layer — must extend beyond logo for blur to be visible */}
-        <motion.div
-          animate={{
-            opacity: [0.4, 0.75, 0.4],
-            scale: [1, 1.15, 1],
-          }}
-          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute -inset-10 blur-2xl pointer-events-none"
-          style={{
-            background: 'radial-gradient(ellipse at center, rgba(74, 168, 216, 0.35) 0%, rgba(96, 120, 200, 0.25) 35%, rgba(152, 120, 192, 0.15) 60%, transparent 85%)'
-          }}
-        />
-        {/* Actual logo — crisp, not blurred */}
-        <div className="relative w-20 h-20 flex items-center justify-center">
-          <PrismLogo className="w-14 h-10" />
-        </div>
-      </div>
-
-      <h2 className="text-lg font-medium text-white mb-2">
-        Ask anything about your sales world
-      </h2>
-      <p className="text-sm text-zinc-400 max-w-md mb-8">
-        I can help with deal strategy, contact intelligence, coaching insights, and more.
-      </p>
-
-      {/* Suggested questions grid */}
-      <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl">
-        {suggestions.map((q, idx) => {
-          const Icon = q.icon;
-          return (
-            <StaggerItem key={idx}>
-              <motion.button
-                onClick={() => onSuggestionClick(q.text)}
-                whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full glass-card flex items-center gap-3 p-4 text-left group"
-              >
-                <div className="w-10 h-10 rounded-xl bg-prism-blue/10 glow-prism flex items-center justify-center flex-shrink-0">
-                  <Icon className="w-5 h-5 text-prism-blue" />
-                </div>
-                <span className="text-sm text-zinc-300 group-hover:text-white transition-colors flex-1">
-                  {q.text}
-                </span>
-                <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 transition-colors" />
-              </motion.button>
-            </StaggerItem>
-          );
-        })}
-      </StaggerContainer>
-    </motion.div>
-  );
-}
-
-// Typing indicator
-function TypingIndicator() {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="flex items-start gap-3"
-    >
-      <div className="w-9 h-9 rounded-xl bg-prism-blue/10 glow-prism flex items-center justify-center flex-shrink-0">
-        <Sparkles className="w-5 h-5 text-prism-blue" />
-      </div>
-      <div className="glass-card-static p-4 rounded-xl">
-        <div className="flex items-center gap-2">
-          <motion.div
-            animate={{ scale: [1, 1.2, 1] }}
-            transition={{ duration: 0.6, repeat: Infinity, delay: 0 }}
-            className="w-2 h-2 rounded-full bg-prism-blue"
-          />
-          <motion.div
-            animate={{ scale: [1, 1.2, 1] }}
-            transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }}
-            className="w-2 h-2 rounded-full bg-prism-blue"
-          />
-          <motion.div
-            animate={{ scale: [1, 1.2, 1] }}
-            transition={{ duration: 0.6, repeat: Infinity, delay: 0.4 }}
-            className="w-2 h-2 rounded-full bg-prism-blue"
-          />
-          <span className="text-sm text-zinc-400 ml-2">Thinking...</span>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-// Message bubble with rich content
-function MessageBubble({ message, onFollowUpClick, onFeedback }) {
-  const isUser = message.role === 'user';
-  const [expandedSource, setExpandedSource] = useState(null);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}
-    >
-      {/* AI Avatar */}
-      {!isUser && (
-        <div className="w-9 h-9 rounded-xl bg-prism-blue/10 glow-prism flex items-center justify-center flex-shrink-0">
-          <Sparkles className="w-5 h-5 text-prism-blue" />
-        </div>
-      )}
-
-      <div className={`max-w-[80%] ${isUser ? 'order-first' : ''}`}>
-        {/* Message content */}
-        <div className={`rounded-xl p-4 ${
-          isUser
-            ? 'bg-prism-500/10 border border-prism-500/20'
-            : message.error
-              ? 'bg-red-500/10 border border-red-500/30'
-              : 'glass-card-static'
-        }`}>
-          <p className={`text-sm leading-relaxed whitespace-pre-wrap ${
-            isUser
-              ? 'text-prism-100'
-              : message.error
-                ? 'text-red-300'
-                : 'text-zinc-200'
-          }`}>
-            {message.content}
-          </p>
-
-          {/* Intent badge */}
-          {message.intent && !isUser && (
-            <div className="mt-3 pt-3 border-t border-white/5">
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 uppercase tracking-wide">
-                {message.intent.replace('_', ' ')}
-              </span>
-              {message.responseTimeMs && (
-                <span className="text-[10px] text-zinc-600 ml-2">
-                  {message.responseTimeMs}ms
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Sources */}
-        {message.sources && message.sources.length > 0 && (
-          <div className="mt-3">
-            <p className="text-xs text-zinc-500 mb-2">Sources:</p>
-            <div className="flex flex-wrap gap-2">
-              {message.sources.map((source, idx) => (
-                <SourceBadge
-                  key={idx}
-                  source={source}
-                  isExpanded={expandedSource === idx}
-                  onToggle={() => setExpandedSource(expandedSource === idx ? null : idx)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* MEDDPICC visualization if available */}
-        {message.visualizations?.some(v => v.type === 'meddpicc_scorecard') && (
-          <div className="mt-4">
-            <MeddpiccMini
-              visualization={message.visualizations.find(v => v.type === 'meddpicc_scorecard')}
-            />
-          </div>
-        )}
-
-        {/* Follow-up questions */}
-        {message.followUpQuestions && message.followUpQuestions.length > 0 && (
-          <div className="mt-4">
-            <p className="text-xs text-zinc-500 mb-2">Follow-up questions:</p>
-            <div className="flex flex-wrap gap-2">
-              {message.followUpQuestions.map((q, idx) => (
-                <motion.button
-                  key={idx}
-                  onClick={() => onFollowUpClick(q)}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="px-3 py-1.5 rounded-lg bg-prism-blue/10 text-prism-blue text-xs hover:bg-prism-blue/20 transition-colors"
-                >
-                  {q}
-                </motion.button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Feedback buttons */}
-        {!isUser && !message.error && message.id && (
-          <div className="mt-3 flex items-center gap-2">
-            <button
-              onClick={() => onFeedback(message.id, 'helpful')}
-              className={`p-1.5 rounded-lg transition-colors ${
-                message.feedback === 'helpful'
-                  ? 'bg-prism-blue/20 text-prism-blue'
-                  : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'
-              }`}
-              title="Helpful"
-            >
-              <ThumbsUp className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => onFeedback(message.id, 'not_helpful')}
-              className={`p-1.5 rounded-lg transition-colors ${
-                message.feedback === 'not_helpful'
-                  ? 'bg-red-500/20 text-red-400'
-                  : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'
-              }`}
-              title="Not helpful"
-            >
-              <ThumbsDown className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* User Avatar */}
-      {isUser && (
-        <div className="w-9 h-9 rounded-xl bg-zinc-700 flex items-center justify-center flex-shrink-0">
-          <User className="w-5 h-5 text-zinc-400" />
-        </div>
-      )}
-    </motion.div>
-  );
-}
-
-// Source citation badge
-function SourceBadge({ source, isExpanded, onToggle }) {
+// ---- Source citation badge (CLICKABLE) ----
+function SourceBadge({ source, onClick }) {
   const typeColors = {
     segment: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
     deal: 'bg-prism-500/10 text-prism-400 border-prism-500/20',
@@ -703,42 +583,24 @@ function SourceBadge({ source, isExpanded, onToggle }) {
     transcript: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
     stats: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'
   };
-
   const colors = typeColors[source.type] || typeColors.stats;
+  const isNavigable = (source.type === 'deal' || source.type === 'person' || source.type === 'transcript') && source.id;
 
   return (
-    <div className="relative">
-      <button
-        onClick={onToggle}
-        className={`text-xs px-2 py-1 rounded-lg border ${colors} hover:opacity-80 transition-opacity flex items-center gap-1`}
-      >
-        <span className="capitalize">{source.type}</span>
-        {source.name && <span className="text-zinc-500">: {source.name}</span>}
-      </button>
-
-      <AnimatePresence>
-        {isExpanded && source.snippet && (
-          <motion.div
-            initial={{ opacity: 0, y: -5, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -5, scale: 0.95 }}
-            className="absolute top-full left-0 mt-2 z-10 w-64 p-3 glass-card-elevated text-xs"
-          >
-            <p className="text-zinc-300 line-clamp-4">{source.snippet}</p>
-            {source.transcriptFilename && (
-              <p className="text-zinc-500 mt-2 flex items-center gap-1">
-                <FileText className="w-3 h-3" />
-                {source.transcriptFilename}
-              </p>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+    <button
+      onClick={isNavigable ? onClick : undefined}
+      className={`text-xs px-2 py-1 rounded-lg border ${colors} transition-opacity flex items-center gap-1 ${
+        isNavigable ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'
+      }`}
+    >
+      <span className="capitalize">{source.type}</span>
+      {source.name && <span className="text-zinc-500">: {source.name}</span>}
+      {isNavigable && <ExternalLink className="w-3 h-3 ml-0.5 opacity-60" />}
+    </button>
   );
 }
 
-// Mini MEDDPICC scorecard
+// ---- Mini MEDDPICC scorecard ----
 function MeddpiccMini({ visualization }) {
   const [scorecard, setScorecard] = useState(null);
 
@@ -757,9 +619,7 @@ function MeddpiccMini({ visualization }) {
 
   return (
     <div className="glass-card-static p-3 rounded-xl">
-      <p className="text-xs text-zinc-500 mb-2">
-        {visualization.dealName} - MEDDPICC
-      </p>
+      <p className="text-xs text-zinc-500 mb-2">{visualization.dealName} — MEDDPICC</p>
       <div className="flex gap-1">
         {letters.map(letter => {
           const item = scorecard.find(s => s.letter === letter);
@@ -770,11 +630,7 @@ function MeddpiccMini({ visualization }) {
             unknown: 'bg-zinc-700/50 text-zinc-500'
           };
           return (
-            <div
-              key={letter}
-              className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-medium ${statusColors[status]}`}
-              title={`${letter}: ${status}`}
-            >
+            <div key={letter} className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-medium ${statusColors[status]}`} title={`${letter}: ${status}`}>
               {letter}
             </div>
           );

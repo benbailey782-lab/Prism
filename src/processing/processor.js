@@ -140,6 +140,81 @@ export async function callAI(prompt, options = {}) {
 }
 
 /**
+ * Stream AI response as an async generator (for SSE)
+ * Only supports Ollama provider (Anthropic streaming is different and can be added later)
+ */
+export async function* streamAI(prompt, options = {}) {
+  if (!aiProvider) {
+    throw new Error('AI not initialized');
+  }
+
+  if (aiProvider === 'ollama') {
+    const response = await fetch(`${aiConfig.baseUrl}/api/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: aiConfig.model,
+        prompt: prompt,
+        stream: true,
+        options: {
+          num_predict: options.maxTokens || 1500,
+          temperature: options.temperature || 0.7
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Ollama error: ${error}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        if (line.trim()) {
+          try {
+            const data = JSON.parse(line);
+            if (data.response) {
+              yield data.response;
+            }
+          } catch (e) {
+            // Skip malformed JSON lines
+          }
+        }
+      }
+    }
+
+    // Process remaining buffer
+    if (buffer.trim()) {
+      try {
+        const data = JSON.parse(buffer);
+        if (data.response) {
+          yield data.response;
+        }
+      } catch (e) {}
+    }
+  } else if (aiProvider === 'anthropic') {
+    // Fallback: non-streaming for Anthropic (can add streaming later)
+    const response = await aiConfig.client.messages.create({
+      model: aiConfig.model,
+      max_tokens: options.maxTokens || 1500,
+      messages: [{ role: 'user', content: prompt }]
+    });
+    yield response.content[0].text;
+  }
+}
+
+/**
  * Process a transcript - segment it, tag segments, extract entities
  * This is the main AI processing pipeline (Phase 2 Enhanced)
  */
@@ -467,5 +542,6 @@ export default {
   getAIStatus,
   getCallAI,
   callAI,
+  streamAI,
   processTranscript
 };
