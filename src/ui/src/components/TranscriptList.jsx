@@ -18,7 +18,7 @@ function TranscriptList({ onSelect }) {
     try {
       const res = await fetch('/api/transcripts');
       const data = await res.json();
-      setTranscripts(data);
+      setTranscripts(Array.isArray(data) ? data : []);
       setLoading(false);
     } catch (err) {
       setError(err.message);

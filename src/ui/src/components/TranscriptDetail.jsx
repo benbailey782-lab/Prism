@@ -30,8 +30,9 @@ function TranscriptDetail({ transcript, onBack }) {
         fetch(`/api/transcripts/${transcript.id}/segments`),
         fetch(`/api/transcripts/${transcript.id}/metrics`)
       ]);
-      
-      setSegments(await segmentsRes.json());
+
+      const segmentsData = await segmentsRes.json();
+      setSegments(Array.isArray(segmentsData) ? segmentsData : []);
       setMetrics(await metricsRes.json());
     } catch (err) {
       console.error('Error fetching details:', err);

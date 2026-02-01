@@ -17,8 +17,10 @@ export default function ProspectDetail({ prospect: initialProspect, onBack }) {
   const [showLogOutreach, setShowLogOutreach] = useState(false);
 
   useEffect(() => {
-    fetchProspect();
-  }, [initialProspect.id]);
+    if (initialProspect?.id) {
+      fetchProspect();
+    }
+  }, [initialProspect?.id]);
 
   const fetchProspect = async () => {
     try {

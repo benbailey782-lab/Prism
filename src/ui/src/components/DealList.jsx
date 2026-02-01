@@ -215,10 +215,11 @@ function DealList({ onSelect }) {
       const res = await fetch('/api/deals');
       if (!res.ok) throw new Error('Failed to load deals');
       const data = await res.json();
+      const dealsArray = Array.isArray(data) ? data : [];
 
       // Load MEDDPICC for each deal
       const dealsWithMeddpicc = await Promise.all(
-        data.map(async (deal) => {
+        dealsArray.map(async (deal) => {
           const meddRes = await fetch(`/api/deals/${deal.id}/meddpicc`);
           const meddpicc = meddRes.ok ? await meddRes.json() : [];
           return { ...deal, meddpicc };

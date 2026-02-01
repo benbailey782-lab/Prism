@@ -198,7 +198,7 @@ function StatsPanel() {
       const healthData = await healthRes.json();
 
       setStats(statsData);
-      setTranscripts(transcriptsData);
+      setTranscripts(Array.isArray(transcriptsData) ? transcriptsData : []);
       setHealth(healthData);
     } catch (err) {
       setError(err.message);

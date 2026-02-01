@@ -54,7 +54,8 @@ export default function InsightsDashboard() {
   const fetchInsights = async () => {
     try {
       const res = await fetch('/api/insights?active=true');
-      setInsights(await res.json());
+      const data = await res.json();
+      setInsights(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Failed to fetch insights:', err);
     }
@@ -75,7 +76,8 @@ export default function InsightsDashboard() {
   const fetchPatterns = async () => {
     try {
       const res = await fetch('/api/insights/patterns');
-      setPatterns(await res.json());
+      const data = await res.json();
+      setPatterns(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Failed to fetch patterns:', err);
     }
@@ -115,7 +117,7 @@ export default function InsightsDashboard() {
       await fetch(`/api/insights/${insightId}/feedback`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ helpful: isHelpful })
+        body: JSON.stringify({ feedback: isHelpful ? 'helpful' : 'not_helpful' })
       });
       await fetchInsights();
     } catch (err) {

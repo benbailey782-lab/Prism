@@ -232,7 +232,7 @@ function PeopleList({ onSelect }) {
       const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to load people');
       const data = await res.json();
-      setPeople(data);
+      setPeople(Array.isArray(data) ? data : []);
     } catch (err) {
       setError(err.message);
     } finally {

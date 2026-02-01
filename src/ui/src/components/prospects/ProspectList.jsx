@@ -29,7 +29,7 @@ export default function ProspectList({ onSelect }) {
 
       const res = await fetch(`/api/prospects?${params}`);
       const data = await res.json();
-      setProspects(data);
+      setProspects(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Failed to fetch prospects:', err);
     }
@@ -45,8 +45,8 @@ export default function ProspectList({ onSelect }) {
     }
   };
 
-  const filteredProspects = prospects.filter(p =>
-    p.company_name.toLowerCase().includes(search.toLowerCase())
+  const filteredProspects = (prospects || []).filter(p =>
+    (p.company_name || '').toLowerCase().includes(search.toLowerCase())
   );
 
   const groupedByTier = {
@@ -93,25 +93,25 @@ export default function ProspectList({ onSelect }) {
           <StatCard
             icon={AlertCircle}
             label="Overdue"
-            value={stats.overdueCount}
+            value={stats.overdueCount || 0}
             color="red"
           />
           <StatCard
             icon={Clock}
             label="Due Today"
-            value={stats.dueToday}
+            value={stats.dueToday || 0}
             color="amber"
           />
           <StatCard
             icon={TrendingUp}
             label="Response Rate"
-            value={`${Math.round(stats.responseRate * 100)}%`}
+            value={`${Math.round((stats.responseRate || 0) * 100)}%`}
             color="green"
           />
           <StatCard
             icon={CheckCircle}
             label="Meetings This Week"
-            value={stats.meetingsBooked}
+            value={stats.meetingsBooked || 0}
             color="blue"
           />
         </div>

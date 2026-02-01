@@ -125,7 +125,7 @@ function SegmentBrowser() {
       const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to load segments');
       const data = await res.json();
-      setSegments(data);
+      setSegments(Array.isArray(data) ? data : []);
     } catch (err) {
       setError(err.message);
     } finally {

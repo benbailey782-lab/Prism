@@ -22,11 +22,7 @@ import { getSegmentsForPerson, getSegmentsForDeal } from './db/queries.js';
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-function dirname(path) {
-  return path.substring(0, path.lastIndexOf('/'));
-}
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3001;

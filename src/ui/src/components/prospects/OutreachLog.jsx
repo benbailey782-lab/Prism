@@ -50,8 +50,8 @@ export default function OutreachLog({ prospectId, outreach, onRefresh }) {
                     <span className="text-sm font-medium text-zinc-200 capitalize">
                       {item.method}
                     </span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${OUTCOME_COLORS[item.outcome]}`}>
-                      {item.outcome.replace(/_/g, ' ')}
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${OUTCOME_COLORS[item.outcome] || OUTCOME_COLORS.pending}`}>
+                      {(item.outcome || 'pending').replace(/_/g, ' ')}
                     </span>
                     {item.direction === 'inbound' && (
                       <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400">
