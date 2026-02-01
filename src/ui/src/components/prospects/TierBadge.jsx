@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function TierBadge({ tier, size = 'md' }) {
   const tiers = {
-    1: { label: 'Tier 1', color: 'bg-green-500/20 text-green-400 border-green-500/30' },
+    1: { label: 'Tier 1', color: 'bg-prism-blue/20 text-prism-blue border-prism-blue/30' },
     2: { label: 'Tier 2', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
     3: { label: 'Tier 3', color: 'bg-zinc-700 text-zinc-400 border-zinc-600' }
   };

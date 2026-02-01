@@ -1,8 +1,8 @@
-# Sales Brain - Project Handoff Document
+# Prism - Project Handoff Document
 
 ## Overview
 
-**Sales Brain** is a personal learning and insights engine for sales professionals. It transforms call transcripts into searchable institutional memory with precomputed intelligence.
+**Prism** is a personal learning and insights engine for sales professionals. It transforms call transcripts into searchable institutional memory with precomputed intelligence.
 
 **Owner:** Ben (Territory Sales Manager transitioning to Founder AE role)
 
@@ -143,7 +143,7 @@ System returns synthesized answers with dynamic visualizations and source citati
 ## Project Structure
 
 ```
-sales-brain/
+prism/
 ├── README.md
 ├── package.json
 ├── .env.example
@@ -230,7 +230,7 @@ sales-brain/
 
 ```bash
 # 1. Clone/navigate to project
-cd sales-brain
+cd prism
 
 # 2. Install backend dependencies
 npm install
@@ -260,7 +260,7 @@ npm run dev
 ANTHROPIC_API_KEY=     # Required for AI processing
 WATCH_FOLDER=./transcripts
 PORT=3001
-DB_PATH=./data/sales-brain.db
+DB_PATH=./data/prism.db
 ```
 
 ---

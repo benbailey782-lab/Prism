@@ -15,10 +15,10 @@ export default function StatCard({
 }) {
   const colorMap = {
     green: {
-      bg: 'bg-green-500/10',
-      glow: 'glow-green',
-      text: 'text-green-400',
-      icon: 'text-green-400'
+      bg: 'bg-prism-blue/10',
+      glow: 'glow-prism',
+      text: 'text-prism-blue',
+      icon: 'text-prism-blue'
     },
     blue: {
       bg: 'bg-blue-500/10',
@@ -81,7 +81,7 @@ export default function StatCard({
             {label}
           </div>
           {trend !== null && (
-            <div className={`text-xs mt-2 ${trend >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+            <div className={`text-xs mt-2 ${trend >= 0 ? 'text-prism-blue' : 'text-red-400'}`}>
               {trend >= 0 ? '+' : ''}{trend}% {trendLabel}
             </div>
           )}
@@ -102,7 +102,7 @@ export function StatCardCompact({
   className = ''
 }) {
   const colorMap = {
-    green: { bg: 'bg-green-500/10', icon: 'text-green-400' },
+    green: { bg: 'bg-prism-blue/10', icon: 'text-prism-blue' },
     blue: { bg: 'bg-blue-500/10', icon: 'text-blue-400' },
     purple: { bg: 'bg-purple-500/10', icon: 'text-purple-400' },
     amber: { bg: 'bg-amber-500/10', icon: 'text-amber-400' },
@@ -143,7 +143,7 @@ export function StatCardGrid({ children, className = '' }) {
  */
 export function StatBadge({ value, label, color = 'green', className = '' }) {
   const colorMap = {
-    green: 'bg-green-500/10 text-green-400',
+    green: 'bg-prism-blue/10 text-prism-blue',
     blue: 'bg-blue-500/10 text-blue-400',
     purple: 'bg-purple-500/10 text-purple-400',
     amber: 'bg-amber-500/10 text-amber-400',

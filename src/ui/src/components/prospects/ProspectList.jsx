@@ -80,7 +80,7 @@ export default function ProspectList({ onSelect }) {
         </div>
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg font-medium transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-prism-500 hover:bg-prism-blue text-white rounded-lg font-medium transition-colors"
         >
           <Plus className="w-4 h-4" />
           Add Prospect
@@ -126,14 +126,14 @@ export default function ProspectList({ onSelect }) {
             placeholder="Search prospects..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-green-500/50"
+            className="w-full pl-10 pr-4 py-2 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-prism-blue/50"
           />
         </div>
 
         <select
           value={filter.tier}
           onChange={(e) => setFilter({ ...filter, tier: e.target.value })}
-          className="px-3 py-2 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-200 focus:outline-none focus:border-green-500/50"
+          className="px-3 py-2 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-200 focus:outline-none focus:border-prism-blue/50"
         >
           <option value="all">All Tiers</option>
           <option value="1">Tier 1</option>
@@ -144,7 +144,7 @@ export default function ProspectList({ onSelect }) {
         <select
           value={filter.status}
           onChange={(e) => setFilter({ ...filter, status: e.target.value })}
-          className="px-3 py-2 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-200 focus:outline-none focus:border-green-500/50"
+          className="px-3 py-2 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-200 focus:outline-none focus:border-prism-blue/50"
         >
           <option value="active">Active</option>
           <option value="nurture">Nurture</option>
@@ -228,7 +228,7 @@ export default function ProspectList({ onSelect }) {
                             {prospect.signals.slice(0, 4).map((signal, i) => (
                               <span
                                 key={i}
-                                className="text-xs px-2 py-1 rounded-full bg-green-500/10 text-green-400"
+                                className="text-xs px-2 py-1 rounded-full bg-prism-blue/10 text-prism-blue"
                               >
                                 {signal.signal_type.replace(/_/g, ' ')}
                               </span>
@@ -268,7 +268,7 @@ function StatCard({ icon: Icon, label, value, color }) {
   const colors = {
     red: 'bg-red-500/10 text-red-400',
     amber: 'bg-amber-500/10 text-amber-400',
-    green: 'bg-green-500/10 text-green-400',
+    green: 'bg-prism-blue/10 text-prism-blue',
     blue: 'bg-blue-500/10 text-blue-400',
   };
 

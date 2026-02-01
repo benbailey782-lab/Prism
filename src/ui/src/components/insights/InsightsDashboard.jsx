@@ -17,7 +17,7 @@ const INSIGHT_ICONS = {
 const INSIGHT_COLORS = {
   icp: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
   pattern: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
-  coaching: 'bg-green-500/10 text-green-400 border-green-500/30',
+  coaching: 'bg-prism-blue/10 text-prism-blue border-prism-blue/30',
   signal: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
   recommendation: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30'
 };
@@ -146,7 +146,7 @@ export default function InsightsDashboard() {
         <button
           onClick={runAnalysis}
           disabled={analyzing}
-          className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-prism-500 hover:bg-prism-blue text-white rounded-lg font-medium transition-colors disabled:opacity-50"
         >
           <RefreshCw className={`w-4 h-4 ${analyzing ? 'animate-spin' : ''}`} />
           {analyzing ? 'Analyzing...' : 'Run Analysis'}
@@ -237,8 +237,8 @@ export default function InsightsDashboard() {
       {coaching && coaching.recommendations && coaching.recommendations.length > 0 && (
         <div className="bg-zinc-800/50 rounded-xl border border-zinc-700/50 p-4">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-              <Brain className="w-5 h-5 text-green-400" />
+            <div className="w-10 h-10 rounded-lg bg-prism-blue/10 flex items-center justify-center">
+              <Brain className="w-5 h-5 text-prism-blue" />
             </div>
             <div>
               <h2 className="text-lg font-medium text-white">Coaching Recommendations</h2>
@@ -364,7 +364,7 @@ function ICPCard({ icp }) {
           <div className="space-y-2">
             {icp.winningBehaviors.map((behavior, i) => (
               <div key={i} className="flex items-start gap-2">
-                <Zap className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
+                <Zap className="w-4 h-4 text-prism-blue flex-shrink-0 mt-0.5" />
                 <span className="text-sm text-zinc-300">{behavior}</span>
               </div>
             ))}
@@ -413,7 +413,7 @@ function InsightCard({ insight, onFeedback }) {
           <div className="flex items-center gap-2 mt-2">
             <button
               onClick={() => onFeedback(insight.id, true)}
-              className="p-1 text-zinc-500 hover:text-green-400 transition-colors"
+              className="p-1 text-zinc-500 hover:text-prism-blue transition-colors"
               title="Helpful"
             >
               <ThumbsUp className="w-4 h-4" />
@@ -444,7 +444,7 @@ function PatternCard({ pattern }) {
         <span className="text-sm font-medium text-white">{pattern.pattern || pattern.name}</span>
         {pattern.impact && (
           <span className={`text-xs px-2 py-0.5 rounded-full ${
-            pattern.impact === 'positive' ? 'bg-green-500/10 text-green-400' :
+            pattern.impact === 'positive' ? 'bg-prism-blue/10 text-prism-blue' :
             pattern.impact === 'negative' ? 'bg-red-500/10 text-red-400' :
             'bg-zinc-700 text-zinc-400'
           }`}>

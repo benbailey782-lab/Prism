@@ -1,12 +1,35 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Send, Brain, User, Loader2, Sparkles, MessageSquare,
+  Send, User, Loader2, Sparkles, MessageSquare,
   FileText, Target, Users, Lightbulb, AlertCircle, History,
   ThumbsUp, ThumbsDown, ExternalLink, ChevronRight, X, RefreshCw
 } from 'lucide-react';
 import GlassCard from './shared/GlassCard';
 import { StaggerContainer, StaggerItem } from './shared/PageTransition';
+
+// Prism Logo Mark SVG component
+const PrismLogo = ({ className = "w-6 h-6" }) => (
+  <svg className={className} viewBox="0 0 280 199" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <ellipse opacity="0.6" cx="140" cy="139" rx="140" ry="60" fill="url(#paint0_linear_ask)"/>
+    <ellipse opacity="0.6" cx="139.5" cy="100.5" rx="137.5" ry="57.5" fill="url(#paint1_linear_ask)"/>
+    <ellipse opacity="0.6" cx="140" cy="60" rx="140" ry="60" fill="url(#paint2_linear_ask)"/>
+    <defs>
+      <linearGradient id="paint0_linear_ask" x1="0" y1="139" x2="280" y2="139" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#4AA8D8"/>
+        <stop offset="1" stopColor="#C888B0"/>
+      </linearGradient>
+      <linearGradient id="paint1_linear_ask" x1="2" y1="100" x2="277" y2="100" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#6078C8"/>
+        <stop offset="1" stopColor="#9878C0"/>
+      </linearGradient>
+      <linearGradient id="paint2_linear_ask" x1="0" y1="59.52" x2="280" y2="59.52" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#7B8EC8"/>
+        <stop offset="1" stopColor="#9890C8"/>
+      </linearGradient>
+    </defs>
+  </svg>
+);
 
 // Suggested questions - will be enhanced with contextual suggestions
 const DEFAULT_SUGGESTIONS = [
@@ -196,7 +219,7 @@ export default function AskPanel() {
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-white">Ask Sales Brain</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-white">Ask Prism</h1>
           <p className="text-sm text-zinc-400 mt-1">
             Ask questions about your deals, contacts, and sales insights
           </p>
@@ -218,7 +241,7 @@ export default function AskPanel() {
             onClick={() => setShowHistory(!showHistory)}
             className={`p-2 rounded-xl transition-colors ${
               showHistory
-                ? 'bg-green-500/10 text-green-400'
+                ? 'bg-prism-blue/10 text-prism-blue'
                 : 'text-zinc-400 hover:text-white hover:bg-white/5'
             }`}
             title="Query history"
@@ -342,7 +365,7 @@ export default function AskPanel() {
             disabled={!query.trim() || loading}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="p-2.5 bg-brain-500 hover:bg-brain-600 disabled:bg-zinc-700 disabled:text-zinc-500 text-white rounded-xl transition-colors"
+            className="p-2.5 bg-prism-500 hover:bg-prism-600 disabled:bg-zinc-700 disabled:text-zinc-500 text-white rounded-xl transition-colors"
           >
             {loading ? (
               <Loader2 className="w-5 h-5 animate-spin" />
@@ -370,19 +393,19 @@ function EmptyState({ suggestions, onSuggestionClick }) {
     >
       {/* Hero icon with glow */}
       <div className="relative mb-6">
-        <div className="absolute inset-0 blur-3xl bg-green-500/20 rounded-full" />
+        <div className="absolute inset-0 blur-3xl bg-prism-500/20 rounded-full" />
         <motion.div
           animate={{
             boxShadow: [
-              '0 0 30px rgba(34, 197, 94, 0.3)',
-              '0 0 60px rgba(34, 197, 94, 0.4)',
-              '0 0 30px rgba(34, 197, 94, 0.3)'
+              '0 0 30px rgba(96, 120, 200, 0.3)',
+              '0 0 60px rgba(96, 120, 200, 0.4)',
+              '0 0 30px rgba(96, 120, 200, 0.3)'
             ]
           }}
           transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-          className="relative w-20 h-20 rounded-2xl animated-gradient flex items-center justify-center"
+          className="relative w-20 h-20 rounded-2xl bg-[#09090b] border border-white/10 flex items-center justify-center"
         >
-          <Brain className="w-10 h-10 text-white" />
+          <PrismLogo className="w-12 h-8" />
         </motion.div>
       </div>
 
@@ -405,8 +428,8 @@ function EmptyState({ suggestions, onSuggestionClick }) {
                 whileTap={{ scale: 0.98 }}
                 className="w-full glass-card flex items-center gap-3 p-4 text-left group"
               >
-                <div className="w-10 h-10 rounded-xl bg-green-500/10 glow-green flex items-center justify-center flex-shrink-0">
-                  <Icon className="w-5 h-5 text-green-400" />
+                <div className="w-10 h-10 rounded-xl bg-prism-blue/10 glow-prism flex items-center justify-center flex-shrink-0">
+                  <Icon className="w-5 h-5 text-prism-blue" />
                 </div>
                 <span className="text-sm text-zinc-300 group-hover:text-white transition-colors flex-1">
                   {q.text}
@@ -429,25 +452,25 @@ function TypingIndicator() {
       animate={{ opacity: 1, y: 0 }}
       className="flex items-start gap-3"
     >
-      <div className="w-9 h-9 rounded-xl bg-green-500/10 glow-green flex items-center justify-center flex-shrink-0">
-        <Sparkles className="w-5 h-5 text-green-400" />
+      <div className="w-9 h-9 rounded-xl bg-prism-blue/10 glow-prism flex items-center justify-center flex-shrink-0">
+        <Sparkles className="w-5 h-5 text-prism-blue" />
       </div>
       <div className="glass-card-static p-4 rounded-xl">
         <div className="flex items-center gap-2">
           <motion.div
             animate={{ scale: [1, 1.2, 1] }}
             transition={{ duration: 0.6, repeat: Infinity, delay: 0 }}
-            className="w-2 h-2 rounded-full bg-green-400"
+            className="w-2 h-2 rounded-full bg-prism-blue"
           />
           <motion.div
             animate={{ scale: [1, 1.2, 1] }}
             transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }}
-            className="w-2 h-2 rounded-full bg-green-400"
+            className="w-2 h-2 rounded-full bg-prism-blue"
           />
           <motion.div
             animate={{ scale: [1, 1.2, 1] }}
             transition={{ duration: 0.6, repeat: Infinity, delay: 0.4 }}
-            className="w-2 h-2 rounded-full bg-green-400"
+            className="w-2 h-2 rounded-full bg-prism-blue"
           />
           <span className="text-sm text-zinc-400 ml-2">Thinking...</span>
         </div>
@@ -469,8 +492,8 @@ function MessageBubble({ message, onFollowUpClick, onFeedback }) {
     >
       {/* AI Avatar */}
       {!isUser && (
-        <div className="w-9 h-9 rounded-xl bg-green-500/10 glow-green flex items-center justify-center flex-shrink-0">
-          <Sparkles className="w-5 h-5 text-green-400" />
+        <div className="w-9 h-9 rounded-xl bg-prism-blue/10 glow-prism flex items-center justify-center flex-shrink-0">
+          <Sparkles className="w-5 h-5 text-prism-blue" />
         </div>
       )}
 
@@ -478,14 +501,14 @@ function MessageBubble({ message, onFollowUpClick, onFeedback }) {
         {/* Message content */}
         <div className={`rounded-xl p-4 ${
           isUser
-            ? 'bg-green-500/10 border border-green-500/20'
+            ? 'bg-prism-500/10 border border-prism-500/20'
             : message.error
               ? 'bg-red-500/10 border border-red-500/30'
               : 'glass-card-static'
         }`}>
           <p className={`text-sm leading-relaxed whitespace-pre-wrap ${
             isUser
-              ? 'text-green-100'
+              ? 'text-prism-100'
               : message.error
                 ? 'text-red-300'
                 : 'text-zinc-200'
@@ -545,7 +568,7 @@ function MessageBubble({ message, onFollowUpClick, onFeedback }) {
                   onClick={() => onFollowUpClick(q)}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="px-3 py-1.5 rounded-lg bg-green-500/10 text-green-400 text-xs hover:bg-green-500/20 transition-colors"
+                  className="px-3 py-1.5 rounded-lg bg-prism-blue/10 text-prism-blue text-xs hover:bg-prism-blue/20 transition-colors"
                 >
                   {q}
                 </motion.button>
@@ -561,7 +584,7 @@ function MessageBubble({ message, onFollowUpClick, onFeedback }) {
               onClick={() => onFeedback(message.id, 'helpful')}
               className={`p-1.5 rounded-lg transition-colors ${
                 message.feedback === 'helpful'
-                  ? 'bg-green-500/20 text-green-400'
+                  ? 'bg-prism-blue/20 text-prism-blue'
                   : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'
               }`}
               title="Helpful"
@@ -597,7 +620,7 @@ function MessageBubble({ message, onFollowUpClick, onFeedback }) {
 function SourceBadge({ source, isExpanded, onToggle }) {
   const typeColors = {
     segment: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-    deal: 'bg-green-500/10 text-green-400 border-green-500/20',
+    deal: 'bg-prism-500/10 text-prism-400 border-prism-500/20',
     person: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
     transcript: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
     stats: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'
@@ -664,7 +687,7 @@ function MeddpiccMini({ visualization }) {
           const item = scorecard.find(s => s.letter === letter);
           const status = item?.status || 'unknown';
           const statusColors = {
-            identified: 'bg-green-500/20 text-green-400 glow-green',
+            identified: 'bg-prism-blue/20 text-prism-blue glow-prism',
             partial: 'bg-amber-500/20 text-amber-400 glow-amber',
             unknown: 'bg-zinc-700/50 text-zinc-500'
           };

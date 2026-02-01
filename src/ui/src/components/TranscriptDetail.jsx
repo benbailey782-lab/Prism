@@ -88,7 +88,7 @@ function TranscriptDetail({ transcript, onBack }) {
         <button
           onClick={handleReprocess}
           disabled={processing}
-          className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 
+          className="flex items-center gap-2 px-4 py-2 bg-prism-500 hover:bg-prism-blue
                      disabled:bg-zinc-700 disabled:text-zinc-500
                      text-white rounded-lg transition-colors text-sm font-medium"
         >
@@ -207,8 +207,8 @@ function TabButton({ children, active, onClick }) {
       onClick={onClick}
       className={`
         px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors
-        ${active 
-          ? 'border-green-500 text-white' 
+        ${active
+          ? 'border-prism-blue text-white'
           : 'border-transparent text-zinc-500 hover:text-zinc-300'}
       `}
     >
@@ -274,10 +274,10 @@ function CoachingView({ metrics }) {
     <div className="space-y-6">
       {metrics.strongMoments?.length > 0 && (
         <div>
-          <h3 className="text-sm font-medium text-green-400 mb-3">✓ Strong Moments</h3>
+          <h3 className="text-sm font-medium text-prism-blue mb-3">✓ Strong Moments</h3>
           <ul className="space-y-2">
             {metrics.strongMoments.map((item, i) => (
-              <li key={i} className="text-sm text-zinc-300 bg-green-500/10 border border-green-500/20 rounded-lg p-3">
+              <li key={i} className="text-sm text-zinc-300 bg-prism-blue/10 border border-prism-blue/20 rounded-lg p-3">
                 {item}
               </li>
             ))}

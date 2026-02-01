@@ -13,7 +13,7 @@ if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
 
-const dbPath = process.env.DB_PATH || join(dataDir, 'sales-brain.db');
+const dbPath = process.env.DB_PATH || join(dataDir, 'prism.db');
 
 export function initDatabase() {
   const db = new Database(dbPath);

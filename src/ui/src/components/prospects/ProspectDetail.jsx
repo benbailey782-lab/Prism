@@ -136,7 +136,7 @@ export default function ProspectDetail({ prospect: initialProspect, onBack }) {
           </button>
           <button
             onClick={handleConvertToDeal}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg font-medium transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-prism-500 hover:bg-prism-blue text-white rounded-lg font-medium transition-colors"
           >
             <Target className="w-4 h-4" />
             Convert to Deal
@@ -162,7 +162,7 @@ export default function ProspectDetail({ prospect: initialProspect, onBack }) {
               onClick={() => setActiveTab(tab)}
               className={`pb-3 text-sm font-medium capitalize transition-colors ${
                 activeTab === tab
-                  ? 'text-green-400 border-b-2 border-green-400'
+                  ? 'text-prism-blue border-b-2 border-prism-blue'
                   : 'text-zinc-400 hover:text-zinc-200'
               }`}
             >
@@ -216,7 +216,7 @@ export default function ProspectDetail({ prospect: initialProspect, onBack }) {
               <h3 className="text-sm font-medium text-zinc-300">Buying Signals</h3>
               <button
                 onClick={() => setShowAddSignal(true)}
-                className="text-xs text-green-400 hover:text-green-300"
+                className="text-xs text-prism-blue hover:text-prism-300"
               >
                 + Add Signal
               </button>
@@ -232,7 +232,7 @@ export default function ProspectDetail({ prospect: initialProspect, onBack }) {
                       <p className="text-xs text-zinc-500 mt-0.5">{signal.signal_value}</p>
                     )}
                   </div>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/10 text-green-400">
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-prism-blue/10 text-prism-blue">
                     +{signal.weight}
                   </span>
                 </div>
@@ -338,7 +338,7 @@ export default function ProspectDetail({ prospect: initialProspect, onBack }) {
                     <span className="text-sm font-medium text-zinc-200 capitalize">
                       {signal.signal_type.replace(/_/g, ' ')}
                     </span>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/10 text-green-400">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-prism-blue/10 text-prism-blue">
                       +{signal.weight} pts
                     </span>
                   </div>
@@ -457,7 +457,7 @@ function AddSignalModal({ onClose, onAdd }) {
           <button
             onClick={() => onAdd(form)}
             disabled={!form.signalType}
-            className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg disabled:opacity-50"
+            className="px-4 py-2 bg-prism-500 hover:bg-prism-blue text-white rounded-lg disabled:opacity-50"
           >
             Add Signal
           </button>
@@ -542,7 +542,7 @@ function AddContactModal({ onClose, onAdd }) {
           <button
             onClick={() => onAdd(form)}
             disabled={!form.name}
-            className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg disabled:opacity-50"
+            className="px-4 py-2 bg-prism-500 hover:bg-prism-blue text-white rounded-lg disabled:opacity-50"
           >
             Add Contact
           </button>
@@ -675,7 +675,7 @@ function LogOutreachModal({ prospectId, contacts, onClose, onSaved }) {
           </button>
           <button
             onClick={handleSubmit}
-            className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg"
+            className="px-4 py-2 bg-prism-500 hover:bg-prism-blue text-white rounded-lg"
           >
             Log Outreach
           </button>

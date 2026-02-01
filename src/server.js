@@ -507,19 +507,77 @@ app.use('/api/learning', learningRoutes);
 app.use('/api', uploadRoutes);
 
 // ============================================
+// CONFIG ROUTES (for Electron)
+// ============================================
+
+// Get current watch folder
+app.get('/api/config/watch-folder', (req, res) => {
+  res.json({ watchFolder: WATCH_FOLDER });
+});
+
+// Update watch folder at runtime
+app.put('/api/config/watch-folder', (req, res) => {
+  try {
+    const { watchFolder: newFolder } = req.body;
+    if (!newFolder) {
+      return res.status(400).json({ error: 'watchFolder is required' });
+    }
+
+    // Validate path exists
+    if (!fs.existsSync(newFolder)) {
+      return res.status(400).json({ error: 'Folder does not exist' });
+    }
+
+    // Restart watcher with new folder
+    const { restartWatcher } = require('./ingestion/watcher.js');
+    if (restartWatcher) {
+      restartWatcher(newFolder, {
+        processImmediately: false,
+        onNewFile: ({ transcriptId, filepath }) => {
+          console.log(`API: New transcript ingested: ${transcriptId}`);
+        }
+      });
+    }
+
+    res.json({ success: true, watchFolder: newFolder });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================
+// ELECTRON STATIC FILE SERVING
+// ============================================
+
+// In production (Electron), serve the built frontend
+if (process.env.ELECTRON === 'true') {
+  const uiDistPath = path.join(__dirname, 'ui', 'dist');
+  if (fs.existsSync(uiDistPath)) {
+    app.use(express.static(uiDistPath));
+    app.get('*', (req, res, next) => {
+      if (req.path.startsWith('/api')) return next();
+      res.sendFile(path.join(uiDistPath, 'index.html'));
+    });
+  }
+}
+
+// ============================================
 // START SERVER
 // ============================================
 
 app.listen(PORT, () => {
   const aiStatus = getAIStatus();
+  const isElectron = process.env.ELECTRON === 'true';
   console.log(`
 ╔═══════════════════════════════════════════════════════════╗
-║                      SALES BRAIN                          ║
+║                         PRISM                             ║
+║                   Intelligence Engine                     ║
 ║                                                           ║
 ║  API Server:     http://localhost:${PORT}                   ║
 ║  Watch Folder:   ${WATCH_FOLDER.padEnd(36)}  ║
 ║  AI Provider:    ${(aiStatus.provider || 'none').padEnd(36)}  ║
 ║  AI Model:       ${(aiStatus.model || 'n/a').padEnd(36)}  ║
+║  Mode:           ${(isElectron ? 'Electron' : 'Development').padEnd(36)}  ║
 ║                                                           ║
 ║  Drop transcripts in the watch folder to begin.           ║
 ╚═══════════════════════════════════════════════════════════╝

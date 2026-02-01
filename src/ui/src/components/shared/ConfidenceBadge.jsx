@@ -4,7 +4,7 @@ export default function ConfidenceBadge({ confidence, size = 'sm' }) {
   const percent = Math.round((confidence || 0) * 100);
 
   let color = 'bg-zinc-700 text-zinc-400';
-  if (percent >= 80) color = 'bg-green-500/20 text-green-400';
+  if (percent >= 80) color = 'bg-prism-blue/20 text-prism-blue';
   else if (percent >= 60) color = 'bg-blue-500/20 text-blue-400';
   else if (percent >= 40) color = 'bg-amber-500/20 text-amber-400';
   else if (percent > 0) color = 'bg-red-500/20 text-red-400';

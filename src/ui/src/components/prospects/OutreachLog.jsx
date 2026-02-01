@@ -12,11 +12,11 @@ const METHOD_ICONS = {
 
 const OUTCOME_COLORS = {
   pending: 'bg-zinc-700 text-zinc-300',
-  positive: 'bg-green-500/10 text-green-400',
+  positive: 'bg-prism-blue/10 text-prism-blue',
   negative: 'bg-red-500/10 text-red-400',
   no_response: 'bg-zinc-700 text-zinc-400',
   meeting_booked: 'bg-blue-500/10 text-blue-400',
-  replied: 'bg-green-500/10 text-green-400',
+  replied: 'bg-prism-blue/10 text-prism-blue',
   bounced: 'bg-red-500/10 text-red-400'
 };
 

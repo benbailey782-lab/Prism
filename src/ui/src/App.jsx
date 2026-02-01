@@ -16,6 +16,7 @@ import ProspectDetail from './components/prospects/ProspectDetail';
 import InsightsDashboard from './components/insights/InsightsDashboard';
 import AskPanel from './components/AskPanel';
 import CaptureModal from './components/CaptureModal';
+import Settings from './components/Settings';
 
 // Page transition wrapper
 function PageWrapper({ children, viewKey }) {
@@ -135,6 +136,8 @@ function App() {
         return <TranscriptList onSelect={handleSelectItem} />;
       case 'stats':
         return <StatsPanel />;
+      case 'settings':
+        return <Settings />;
       default:
         return <AskPanel />;
     }
@@ -173,6 +176,33 @@ function App() {
               <div className="flex items-center gap-3 text-red-400">
                 <AlertCircle className="w-5 h-5 flex-shrink-0" />
                 <span className="text-sm">{error}</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* AI Disabled Banner */}
+        <AnimatePresence>
+          {health && !health.aiEnabled && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="bg-amber-500/10 border-b border-amber-500/20 px-6 py-3"
+            >
+              <div className="flex items-center gap-3 text-amber-400">
+                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                <span className="text-sm">
+                  AI features require Ollama to be installed and running.{' '}
+                  <a
+                    href="https://ollama.ai"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-prism-blue hover:underline"
+                  >
+                    Learn more →
+                  </a>
+                </span>
               </div>
             </motion.div>
           )}

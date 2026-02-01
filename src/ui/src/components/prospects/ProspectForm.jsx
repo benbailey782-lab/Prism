@@ -90,7 +90,7 @@ export default function ProspectForm({ prospect, onClose, onSaved }) {
               type="text"
               value={form.companyName}
               onChange={(e) => setForm({ ...form, companyName: e.target.value })}
-              className="w-full px-3 py-2 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-green-500/50"
+              className="w-full px-3 py-2 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-prism-blue/50"
               placeholder="Acme Corp"
               required
             />
@@ -105,7 +105,7 @@ export default function ProspectForm({ prospect, onClose, onSaved }) {
               type="url"
               value={form.website}
               onChange={(e) => setForm({ ...form, website: e.target.value })}
-              className="w-full px-3 py-2 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-green-500/50"
+              className="w-full px-3 py-2 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-prism-blue/50"
               placeholder="https://acme.com"
             />
           </div>
@@ -119,7 +119,7 @@ export default function ProspectForm({ prospect, onClose, onSaved }) {
               <select
                 value={form.industry}
                 onChange={(e) => setForm({ ...form, industry: e.target.value })}
-                className="w-full px-3 py-2 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-200 focus:outline-none focus:border-green-500/50"
+                className="w-full px-3 py-2 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-200 focus:outline-none focus:border-prism-blue/50"
               >
                 <option value="">Select...</option>
                 {INDUSTRIES.map(ind => (
@@ -134,7 +134,7 @@ export default function ProspectForm({ prospect, onClose, onSaved }) {
               <select
                 value={form.employeeRange}
                 onChange={(e) => setForm({ ...form, employeeRange: e.target.value })}
-                className="w-full px-3 py-2 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-200 focus:outline-none focus:border-green-500/50"
+                className="w-full px-3 py-2 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-200 focus:outline-none focus:border-prism-blue/50"
               >
                 <option value="">Select...</option>
                 {EMPLOYEE_RANGES.map(range => (
@@ -153,7 +153,7 @@ export default function ProspectForm({ prospect, onClose, onSaved }) {
               type="text"
               value={form.location}
               onChange={(e) => setForm({ ...form, location: e.target.value })}
-              className="w-full px-3 py-2 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-green-500/50"
+              className="w-full px-3 py-2 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-prism-blue/50"
               placeholder="San Francisco, CA"
             />
           </div>
@@ -166,7 +166,7 @@ export default function ProspectForm({ prospect, onClose, onSaved }) {
             <select
               value={form.source}
               onChange={(e) => setForm({ ...form, source: e.target.value })}
-              className="w-full px-3 py-2 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-200 focus:outline-none focus:border-green-500/50"
+              className="w-full px-3 py-2 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-200 focus:outline-none focus:border-prism-blue/50"
             >
               <option value="">Select...</option>
               {SOURCES.map(src => (
@@ -184,7 +184,7 @@ export default function ProspectForm({ prospect, onClose, onSaved }) {
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
               rows={3}
-              className="w-full px-3 py-2 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-green-500/50"
+              className="w-full px-3 py-2 bg-zinc-800/50 border border-zinc-700/50 rounded-lg text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-prism-blue/50"
               placeholder="Any relevant notes..."
             />
           </div>
@@ -201,7 +201,7 @@ export default function ProspectForm({ prospect, onClose, onSaved }) {
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+              className="px-4 py-2 bg-prism-500 hover:bg-prism-blue text-white rounded-lg font-medium transition-colors disabled:opacity-50"
             >
               {loading ? 'Saving...' : isEdit ? 'Save Changes' : 'Add Prospect'}
             </button>

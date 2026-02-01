@@ -4,7 +4,7 @@ export default function ScoreBar({ score, max = 100, showLabel = true, size = 'm
   const percent = Math.min(100, Math.max(0, (score / max) * 100));
 
   let color = 'bg-zinc-600';
-  if (percent >= 70) color = 'bg-green-500';
+  if (percent >= 70) color = 'bg-prism-blue';
   else if (percent >= 40) color = 'bg-amber-500';
   else if (percent > 0) color = 'bg-red-500';
 

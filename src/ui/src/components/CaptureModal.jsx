@@ -227,9 +227,9 @@ export default function CaptureModal() {
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                      className="w-16 h-16 rounded-full bg-green-500/10 glow-green mx-auto mb-4 flex items-center justify-center"
+                      className="w-16 h-16 rounded-full bg-prism-blue/10 glow-prism mx-auto mb-4 flex items-center justify-center"
                     >
-                      <Check className="w-8 h-8 text-green-400" />
+                      <Check className="w-8 h-8 text-prism-blue" />
                     </motion.div>
                     <h3 className="text-lg font-medium text-white mb-2">
                       {uploadResult.message || 'Content Added'}
@@ -238,7 +238,7 @@ export default function CaptureModal() {
                       {uploadResult.filename && `File: ${uploadResult.filename}`}
                     </p>
                     {uploadResult.processingStatus === 'processing' && (
-                      <p className="text-sm text-green-400 mt-2">
+                      <p className="text-sm text-prism-blue mt-2">
                         Processing started...
                       </p>
                     )}
@@ -283,7 +283,7 @@ export default function CaptureModal() {
                           flex items-center gap-2 px-4 py-3 text-sm font-medium
                           border-b-2 transition-colors
                           ${activeTab === tab.id
-                            ? 'border-green-500 text-green-400'
+                            ? 'border-prism-blue text-prism-blue'
                             : 'border-transparent text-zinc-400 hover:text-zinc-200'}
                         `}
                       >
@@ -308,7 +308,7 @@ export default function CaptureModal() {
                       >
                         {uploading ? (
                           <div className="py-8">
-                            <Loader2 className="w-12 h-12 text-green-400 mx-auto mb-4 animate-spin" />
+                            <Loader2 className="w-12 h-12 text-prism-blue mx-auto mb-4 animate-spin" />
                             <p className="text-zinc-400">Processing file...</p>
                           </div>
                         ) : (
@@ -348,7 +348,7 @@ export default function CaptureModal() {
                             value={noteTitle}
                             onChange={(e) => setNoteTitle(e.target.value)}
                             placeholder="Meeting notes, call summary..."
-                            className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-500 focus:border-green-500 focus:outline-none transition-colors"
+                            className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-500 focus:border-prism-blue focus:outline-none transition-colors"
                           />
                         </div>
                         <div>
@@ -356,7 +356,7 @@ export default function CaptureModal() {
                           <select
                             value={noteContext}
                             onChange={(e) => setNoteContext(e.target.value)}
-                            className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white focus:border-green-500 focus:outline-none transition-colors"
+                            className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white focus:border-prism-blue focus:outline-none transition-colors"
                           >
                             <option value="Sales Call Notes">Sales Call Notes</option>
                             <option value="Meeting Notes">Meeting Notes</option>
@@ -372,7 +372,7 @@ export default function CaptureModal() {
                             onChange={(e) => setNoteContent(e.target.value)}
                             placeholder="Write your notes here..."
                             rows={8}
-                            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-500 focus:border-green-500 focus:outline-none transition-colors resize-none"
+                            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-500 focus:border-prism-blue focus:outline-none transition-colors resize-none"
                           />
                         </div>
                         <button
@@ -402,7 +402,7 @@ export default function CaptureModal() {
                             value={pasteFilename}
                             onChange={(e) => setPasteFilename(e.target.value)}
                             placeholder="call-notes-jan-15.txt"
-                            className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-500 focus:border-green-500 focus:outline-none transition-colors"
+                            className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-500 focus:border-prism-blue focus:outline-none transition-colors"
                           />
                         </div>
                         <div>
@@ -412,7 +412,7 @@ export default function CaptureModal() {
                             onChange={(e) => setPasteContent(e.target.value)}
                             placeholder="Paste your transcript here..."
                             rows={12}
-                            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-500 focus:border-green-500 focus:outline-none transition-colors resize-none font-mono text-sm"
+                            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-zinc-500 focus:border-prism-blue focus:outline-none transition-colors resize-none font-mono text-sm"
                           />
                         </div>
                         <button

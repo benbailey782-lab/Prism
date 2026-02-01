@@ -49,7 +49,7 @@ function MeddpiccCard({ letter, data, onUpdate, aiSignals }) {
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
           <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-            status === 'identified' ? 'bg-green-500/20 text-green-400 border border-green-500/50' :
+            status === 'identified' ? 'bg-prism-blue/20 text-prism-blue border border-prism-blue/50' :
             status === 'partial' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50' :
             'bg-zinc-700/50 text-zinc-400 border border-zinc-600'
           }`}>
@@ -59,7 +59,7 @@ function MeddpiccCard({ letter, data, onUpdate, aiSignals }) {
             <div className="flex items-center gap-2">
               <h4 className="font-medium text-white">{config.name}</h4>
               <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-                status === 'identified' ? 'bg-green-500/20 text-green-400' :
+                status === 'identified' ? 'bg-prism-blue/20 text-prism-blue' :
                 status === 'partial' ? 'bg-amber-500/20 text-amber-400' :
                 'bg-zinc-700 text-zinc-500'
               }`}>
@@ -90,7 +90,7 @@ function MeddpiccCard({ letter, data, onUpdate, aiSignals }) {
                   onClick={() => setStatus(opt)}
                   className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                     status === opt
-                      ? opt === 'identified' ? 'bg-green-500/20 text-green-400 border border-green-500/50' :
+                      ? opt === 'identified' ? 'bg-prism-blue/20 text-prism-blue border border-prism-blue/50' :
                         opt === 'partial' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50' :
                         'bg-zinc-600 text-zinc-300 border border-zinc-500'
                       : 'bg-zinc-700/50 text-zinc-400 border border-zinc-600 hover:bg-zinc-600/50'
@@ -108,7 +108,7 @@ function MeddpiccCard({ letter, data, onUpdate, aiSignals }) {
               onChange={(e) => setEvidence(e.target.value)}
               rows={3}
               placeholder="What evidence supports this status?"
-              className="w-full bg-zinc-700/50 border border-zinc-600 rounded-lg px-3 py-2 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-green-500"
+              className="w-full bg-zinc-700/50 border border-zinc-600 rounded-lg px-3 py-2 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-prism-blue"
             />
           </div>
           <div className="flex gap-2 justify-end">
@@ -120,7 +120,7 @@ function MeddpiccCard({ letter, data, onUpdate, aiSignals }) {
             </button>
             <button
               onClick={handleSave}
-              className="px-3 py-1.5 rounded text-sm bg-green-600 hover:bg-green-500 text-white transition-colors flex items-center gap-1"
+              className="px-3 py-1.5 rounded text-sm bg-prism-500 hover:bg-prism-blue text-white transition-colors flex items-center gap-1"
             >
               <Save className="w-3.5 h-3.5" />
               Save
@@ -197,8 +197,8 @@ function MeddpiccSummary({ summary }) {
           <h4 className="text-xs font-medium text-zinc-400 mb-2">Strengths</h4>
           <div className="space-y-2">
             {summary.strengths.map((strength, idx) => (
-              <div key={idx} className="flex items-start gap-2 p-2 bg-green-500/5 border border-green-500/20 rounded-lg">
-                <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
+              <div key={idx} className="flex items-start gap-2 p-2 bg-prism-blue/5 border border-prism-blue/20 rounded-lg">
+                <CheckCircle className="w-4 h-4 text-prism-blue flex-shrink-0 mt-0.5" />
                 <span className="text-xs text-zinc-300">{strength}</span>
               </div>
             ))}
@@ -288,7 +288,7 @@ function AIBrief({ dealId, onRefresh }) {
         <p className="text-zinc-400">{error}</p>
         <button
           onClick={loadSections}
-          className="mt-3 text-sm text-green-400 hover:text-green-300"
+          className="mt-3 text-sm text-prism-blue hover:text-prism-300"
         >
           Try again
         </button>
@@ -337,8 +337,8 @@ function AIBrief({ dealId, onRefresh }) {
         className="glass-card p-5"
       >
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center glow-green-subtle">
-            <Brain className="w-5 h-5 text-green-400" />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-prism-blue/20 to-prism-400/20 flex items-center justify-center glow-prism-subtle">
+            <Brain className="w-5 h-5 text-prism-blue" />
           </div>
           <div>
             <h3 className="font-medium text-white">Deal Summary</h3>
@@ -358,7 +358,7 @@ function AIBrief({ dealId, onRefresh }) {
                   <ul className="mt-3 space-y-1">
                     {summary.key_points.map((point, i) => (
                       <li key={i} className="text-zinc-400 text-sm flex items-start gap-2">
-                        <Sparkles className="w-3.5 h-3.5 text-green-400 mt-0.5 flex-shrink-0" />
+                        <Sparkles className="w-3.5 h-3.5 text-prism-blue mt-0.5 flex-shrink-0" />
                         <span>{point}</span>
                       </li>
                     ))}
@@ -383,12 +383,12 @@ function AIBrief({ dealId, onRefresh }) {
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
             risks?.level === 'high' ? 'bg-red-500/20 glow-red' :
             risks?.level === 'medium' ? 'bg-amber-500/20 glow-amber' :
-            'bg-green-500/20 glow-green-subtle'
+            'bg-prism-blue/20 glow-prism-subtle'
           }`}>
             <AlertTriangle className={`w-5 h-5 ${
               risks?.level === 'high' ? 'text-red-400' :
               risks?.level === 'medium' ? 'text-amber-400' :
-              'text-green-400'
+              'text-prism-blue'
             }`} />
           </div>
           <div className="flex-1">
@@ -398,7 +398,7 @@ function AIBrief({ dealId, onRefresh }) {
                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                   risks.level === 'high' ? 'bg-red-500/20 text-red-400' :
                   risks.level === 'medium' ? 'bg-amber-500/20 text-amber-400' :
-                  'bg-green-500/20 text-green-400'
+                  'bg-prism-blue/20 text-prism-blue'
                 }`}>
                   {risks.level.charAt(0).toUpperCase() + risks.level.slice(1)} Risk
                 </span>
@@ -588,7 +588,7 @@ function DealDetail({ deal, dealId, onBack, onNavigateToPerson }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full" />
+        <div className="animate-spin w-6 h-6 border-2 border-prism-blue border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -600,7 +600,7 @@ function DealDetail({ deal, dealId, onBack, onNavigateToPerson }) {
         <p className="text-red-400">{error || 'Deal not found'}</p>
         <button
           onClick={onBack}
-          className="mt-4 text-green-400 hover:text-green-300"
+          className="mt-4 text-prism-blue hover:text-prism-300"
         >
           Go back
         </button>
@@ -632,7 +632,7 @@ function DealDetail({ deal, dealId, onBack, onNavigateToPerson }) {
           <div className="flex items-center gap-3">
             <h2 className="text-xl font-semibold text-white">{dealData.company_name}</h2>
             <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-              dealData.status === 'won' ? 'bg-green-500/20 text-green-400' :
+              dealData.status === 'won' ? 'bg-prism-blue/20 text-prism-blue' :
               dealData.status === 'lost' ? 'bg-red-500/20 text-red-400' :
               dealData.status === 'stalled' ? 'bg-amber-500/20 text-amber-400' :
               'bg-blue-500/20 text-blue-400'
@@ -644,7 +644,7 @@ function DealDetail({ deal, dealId, onBack, onNavigateToPerson }) {
             {dealData.contact_name && (
               <button
                 onClick={() => onNavigateToPerson && onNavigateToPerson({ name: dealData.contact_name, company: dealData.company_name })}
-                className="flex items-center gap-1 hover:text-green-400 transition-colors"
+                className="flex items-center gap-1 hover:text-prism-blue transition-colors"
               >
                 <User className="w-4 h-4" />
                 {dealData.contact_name}
@@ -666,7 +666,7 @@ function DealDetail({ deal, dealId, onBack, onNavigateToPerson }) {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-medium text-zinc-300">MEDDPICC Progress</h3>
           <div className="flex items-center gap-4 text-sm">
-            <span className="flex items-center gap-1.5 text-green-400">
+            <span className="flex items-center gap-1.5 text-prism-blue">
               <CheckCircle className="w-4 h-4" />
               {identified} Identified
             </span>
@@ -680,7 +680,7 @@ function DealDetail({ deal, dealId, onBack, onNavigateToPerson }) {
         {/* Progress bar */}
         <div className="h-3 bg-zinc-700/50 rounded-full overflow-hidden flex">
           <div
-            className="h-full bg-green-500 transition-all duration-500"
+            className="h-full bg-prism-blue transition-all duration-500"
             style={{ width: `${(identified / 8) * 100}%` }}
           />
           <div
@@ -692,7 +692,7 @@ function DealDetail({ deal, dealId, onBack, onNavigateToPerson }) {
         <div className="flex justify-between mt-2 text-xs text-zinc-500">
           <span>0%</span>
           <span className={`font-medium ${
-            completionPercent >= 75 ? 'text-green-400' :
+            completionPercent >= 75 ? 'text-prism-blue' :
             completionPercent >= 50 ? 'text-amber-400' :
             'text-zinc-400'
           }`}>
@@ -710,7 +710,7 @@ function DealDetail({ deal, dealId, onBack, onNavigateToPerson }) {
               <div
                 key={letter}
                 className={`w-8 h-8 rounded-lg text-xs flex items-center justify-center font-bold transition-colors ${
-                  status === 'identified' ? 'bg-green-500/30 text-green-400 border border-green-500/50' :
+                  status === 'identified' ? 'bg-prism-blue/30 text-prism-blue border border-prism-blue/50' :
                   status === 'partial' ? 'bg-amber-500/30 text-amber-400 border border-amber-500/50' :
                   'bg-zinc-700/50 text-zinc-500 border border-zinc-600'
                 }`}
@@ -732,7 +732,7 @@ function DealDetail({ deal, dealId, onBack, onNavigateToPerson }) {
           onClick={() => setActiveTab('ai-brief')}
           className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
             activeTab === 'ai-brief'
-              ? 'border-green-500 text-white'
+              ? 'border-prism-blue text-white'
               : 'border-transparent text-zinc-400 hover:text-zinc-200'
           }`}
         >
@@ -743,7 +743,7 @@ function DealDetail({ deal, dealId, onBack, onNavigateToPerson }) {
           onClick={() => setActiveTab('scorecard')}
           className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
             activeTab === 'scorecard'
-              ? 'border-green-500 text-white'
+              ? 'border-prism-blue text-white'
               : 'border-transparent text-zinc-400 hover:text-zinc-200'
           }`}
         >
@@ -754,7 +754,7 @@ function DealDetail({ deal, dealId, onBack, onNavigateToPerson }) {
           onClick={() => setActiveTab('segments')}
           className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
             activeTab === 'segments'
-              ? 'border-green-500 text-white'
+              ? 'border-prism-blue text-white'
               : 'border-transparent text-zinc-400 hover:text-zinc-200'
           }`}
         >
@@ -806,7 +806,7 @@ function DealDetail({ deal, dealId, onBack, onNavigateToPerson }) {
                   <div className="flex items-center gap-2">
                     <span className={`text-xs px-2 py-0.5 rounded-full ${
                       segment.classification === 'objection' ? 'bg-red-500/10 text-red-400' :
-                      segment.classification === 'buying_signal' ? 'bg-green-500/10 text-green-400' :
+                      segment.classification === 'buying_signal' ? 'bg-prism-blue/10 text-prism-blue' :
                       segment.classification === 'pain_point' ? 'bg-amber-500/10 text-amber-400' :
                       segment.classification === 'decision_criteria' ? 'bg-blue-500/10 text-blue-400' :
                       segment.classification === 'competitor_mention' ? 'bg-purple-500/10 text-purple-400' :

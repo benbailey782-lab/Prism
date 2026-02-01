@@ -10,7 +10,7 @@ import StatCard from './shared/StatCard';
 const KNOWLEDGE_TYPE_CONFIG = {
   product_knowledge: { label: 'Product', icon: Package, color: 'bg-blue-500' },
   process_knowledge: { label: 'Process', icon: Settings, color: 'bg-purple-500' },
-  people_context: { label: 'People', icon: Users, color: 'bg-green-500' },
+  people_context: { label: 'People', icon: Users, color: 'bg-prism-blue' },
   sales_insight: { label: 'Sales', icon: Target, color: 'bg-amber-500' },
   advice_received: { label: 'Advice', icon: Lightbulb, color: 'bg-yellow-500' },
   decision_rationale: { label: 'Decisions', icon: HelpCircle, color: 'bg-indigo-500' },
@@ -83,9 +83,9 @@ function RecentActivity({ transcripts }) {
           transition={{ delay: index * 0.05 }}
           className="flex items-start gap-3 p-3 bg-white/[0.02] rounded-lg hover:bg-white/[0.04] transition-colors"
         >
-          <div className={`p-1.5 rounded ${transcript.processed_at ? 'bg-green-500/20' : 'bg-amber-500/20'}`}>
+          <div className={`p-1.5 rounded ${transcript.processed_at ? 'bg-prism-blue/20' : 'bg-amber-500/20'}`}>
             {transcript.processed_at ? (
-              <CheckCircle className="w-4 h-4 text-green-400" />
+              <CheckCircle className="w-4 h-4 text-prism-blue" />
             ) : (
               <Clock className="w-4 h-4 text-amber-400" />
             )}
@@ -138,7 +138,7 @@ function TalkRatioGauge({ ratio }) {
             stroke="currentColor"
             strokeWidth="12"
             strokeDasharray={`${percentage * 2.51} 251`}
-            className={isGood ? 'text-green-500' : isOk ? 'text-amber-500' : 'text-red-500'}
+            className={isGood ? 'text-prism-500' : isOk ? 'text-amber-500' : 'text-red-500'}
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
@@ -196,7 +196,7 @@ function StatsPanel() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full" />
+        <div className="animate-spin w-6 h-6 border-2 border-prism-blue border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -221,8 +221,8 @@ function StatsPanel() {
     >
       {/* Header */}
       <div className="flex items-center gap-4">
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center glow-green-subtle">
-          <Brain className="w-6 h-6 text-green-400" />
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-prism-blue/20 to-prism-400/20 flex items-center justify-center glow-prism-subtle">
+          <Brain className="w-6 h-6 text-prism-blue" />
         </div>
         <div>
           <h2 className="text-xl font-semibold text-white">Dashboard</h2>
@@ -255,15 +255,15 @@ function StatsPanel() {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="glass-card p-4 border-l-2 border-l-green-500"
+          className="glass-card p-4 border-l-2 border-l-prism-blue"
         >
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-green-400" />
+            <div className="w-8 h-8 rounded-lg bg-prism-blue/20 flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-prism-blue" />
             </div>
             <div>
-              <p className="text-sm text-green-200 font-medium">AI Ready</p>
-              <p className="text-xs text-green-300/70 mt-1">
+              <p className="text-sm text-prism-300 font-medium">AI Ready</p>
+              <p className="text-xs text-prism-400/70 mt-1">
                 {health.aiProvider}: {health.aiModel}
               </p>
             </div>
@@ -361,8 +361,8 @@ function StatsPanel() {
         </h3>
         <div className="grid sm:grid-cols-3 gap-4">
           <div className="p-4 bg-white/[0.02] rounded-xl border border-white/5 hover:bg-white/[0.04] transition-colors">
-            <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center mb-3">
-              <span className="text-green-400 font-semibold">1</span>
+            <div className="w-8 h-8 rounded-full bg-prism-blue/20 flex items-center justify-center mb-3">
+              <span className="text-prism-blue font-semibold">1</span>
             </div>
             <h4 className="text-sm font-medium text-zinc-200">Drop Transcripts</h4>
             <p className="text-xs text-zinc-500 mt-1">
@@ -370,8 +370,8 @@ function StatsPanel() {
             </p>
           </div>
           <div className="p-4 bg-white/[0.02] rounded-xl border border-white/5 hover:bg-white/[0.04] transition-colors">
-            <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center mb-3">
-              <span className="text-green-400 font-semibold">2</span>
+            <div className="w-8 h-8 rounded-full bg-prism-blue/20 flex items-center justify-center mb-3">
+              <span className="text-prism-blue font-semibold">2</span>
             </div>
             <h4 className="text-sm font-medium text-zinc-200">Process with AI</h4>
             <p className="text-xs text-zinc-500 mt-1">
@@ -379,8 +379,8 @@ function StatsPanel() {
             </p>
           </div>
           <div className="p-4 bg-white/[0.02] rounded-xl border border-white/5 hover:bg-white/[0.04] transition-colors">
-            <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center mb-3">
-              <span className="text-green-400 font-semibold">3</span>
+            <div className="w-8 h-8 rounded-full bg-prism-blue/20 flex items-center justify-center mb-3">
+              <span className="text-prism-blue font-semibold">3</span>
             </div>
             <h4 className="text-sm font-medium text-zinc-200">Browse & Learn</h4>
             <p className="text-xs text-zinc-500 mt-1">

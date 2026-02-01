@@ -1,15 +1,21 @@
 {
-  "name": "sales-brain",
+  "name": "prism",
   "version": "0.1.0",
-  "description": "Personal learning and insights engine for sales professionals",
+  "description": "Personal intelligence engine for sales professionals",
   "type": "module",
+  "main": "electron/main.js",
   "scripts": {
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "node src/server.js",
     "client": "cd src/ui && npm run dev",
     "db:init": "node src/db/init.js",
     "watch": "node src/ingestion/watcher.js",
-    "build": "cd src/ui && npm run build"
+    "build": "cd src/ui && npm run build",
+    "build:ui": "cd src/ui && npm run build",
+    "electron:dev": "concurrently \"npm run server\" \"cd src/ui && npm run dev\" \"wait-on http://localhost:3001/api/health && electron .\"",
+    "electron:build": "npm run build:ui && electron-builder",
+    "start": "electron .",
+    "postinstall": "electron-rebuild || true"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
@@ -21,6 +27,45 @@
     "uuid": "^11.0.5"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2"
+    "concurrently": "^9.1.2",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0",
+    "electron-rebuild": "^3.6.0",
+    "wait-on": "^8.0.0"
+  },
+  "build": {
+    "appId": "com.prism.app",
+    "productName": "Prism",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "electron/**/*",
+      "src/**/*",
+      "package.json",
+      "!src/ui/src/**/*",
+      "!src/ui/node_modules/**/*",
+      "src/ui/dist/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "assets/",
+        "to": "assets/"
+      }
+    ],
+    "win": {
+      "target": ["nsis"],
+      "icon": "assets/icon.png"
+    },
+    "mac": {
+      "target": ["dmg"],
+      "icon": "assets/icon.png",
+      "category": "public.app-category.business"
+    },
+    "nsis": {
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false
+    },
+    "npmRebuild": true
   }
 }

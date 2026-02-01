@@ -11,18 +11,21 @@ export default {
         mono: ['JetBrains Mono', 'SF Mono', 'Fira Code', 'monospace'],
       },
       colors: {
-        brain: {
-          50: '#f0fdf4',
-          100: '#dcfce7',
-          200: '#bbf7d0',
-          300: '#86efac',
-          400: '#4ade80',
-          500: '#22c55e',
-          600: '#16a34a',
-          700: '#15803d',
-          800: '#166534',
-          900: '#14532d',
-          950: '#052e16',
+        prism: {
+          50:  '#f0f4ff',
+          100: '#dce4f8',
+          200: '#b8c8f0',
+          300: '#9890C8',
+          400: '#7B8EC8',
+          500: '#6078C8',
+          600: '#4A60B0',
+          700: '#3A4D90',
+          800: '#2A3A70',
+          900: '#1C2850',
+          950: '#0E1428',
+          blue: '#4AA8D8',
+          lavender: '#9878C0',
+          pink: '#C888B0',
         }
       },
       backdropBlur: {

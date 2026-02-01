@@ -1,4 +1,4 @@
-# Sales Brain
+# Prism
 ## Complete Product Specification
 
 **Version:** 1.0  
@@ -27,9 +27,9 @@
 
 # 1. Executive Summary
 
-## What is Sales Brain?
+## What is Prism?
 
-Sales Brain is a **personal intelligence engine for sales professionals**. It transforms conversations, documents, and recordings into searchable institutional memory with precomputed insights that evolve over time.
+Prism is a **personal intelligence engine for sales professionals**. It transforms conversations, documents, and recordings into searchable institutional memory with precomputed insights that evolve over time.
 
 ## The Problem
 
@@ -37,11 +37,11 @@ Sales professionals accumulate knowledge through hundreds of conversations — p
 
 ## The Solution
 
-Sales Brain captures everything automatically, extracts knowledge intelligently, organizes it into living documents, and makes it instantly queryable. It's not a CRM. It's not a note-taking app. It's a **second brain that actually thinks**.
+Prism captures everything automatically, extracts knowledge intelligently, organizes it into living documents, and makes it instantly queryable. It's not a CRM. It's not a note-taking app. It's a **second brain that actually thinks**.
 
 ## Key Differentiators
 
-| Traditional Tools | Sales Brain |
+| Traditional Tools | Prism |
 |-------------------|-------------|
 | Store raw data | Extract meaning |
 | Static dashboards | Living documents that evolve |
@@ -57,7 +57,7 @@ Sales Brain captures everything automatically, extracts knowledge intelligently,
 
 > "Ask anything about your sales world and get an intelligent answer in seconds."
 
-Sales Brain should feel like having a brilliant colleague who has perfect recall of every conversation you've ever had, every document you've ever read, and every piece of advice you've ever received — and can synthesize it all on demand.
+Prism should feel like having a brilliant colleague who has perfect recall of every conversation you've ever had, every document you've ever read, and every piece of advice you've ever received — and can synthesize it all on demand.
 
 ## Core Principles
 
@@ -154,7 +154,7 @@ Entities are extracted automatically and linked to segments.
 
 ## 3.5 MEDDPICC
 
-MEDDPICC is a sales qualification framework. Sales Brain tracks coverage automatically:
+MEDDPICC is a sales qualification framework. Prism tracks coverage automatically:
 
 | Letter | Meaning | What We Track |
 |--------|---------|---------------|
@@ -703,4 +703,4 @@ Full .env template with:
 
 ---
 
-*This document is the source of truth for Sales Brain development.*
+*This document is the source of truth for Prism development.*

@@ -87,7 +87,7 @@ function TranscriptCard({ transcript, onClick }) {
       <div className="flex items-start gap-4">
         <div className={`
           w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0
-          ${isProcessed ? 'bg-green-500/10 text-green-400' : 'bg-zinc-800 text-zinc-500'}
+          ${isProcessed ? 'bg-prism-blue/10 text-prism-blue' : 'bg-zinc-800 text-zinc-500'}
         `}>
           <FileText className="w-5 h-5" />
         </div>

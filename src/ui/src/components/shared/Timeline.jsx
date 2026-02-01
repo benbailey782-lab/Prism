@@ -17,14 +17,14 @@ export default function Timeline({ items }) {
           {/* Dot */}
           <div className={`
             w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center
-            ${item.type === 'success' ? 'bg-green-500/20' :
+            ${item.type === 'success' ? 'bg-prism-blue/20' :
               item.type === 'warning' ? 'bg-amber-500/20' :
               item.type === 'error' ? 'bg-red-500/20' :
               'bg-zinc-800'}
           `}>
             <div className={`
               w-2 h-2 rounded-full
-              ${item.type === 'success' ? 'bg-green-500' :
+              ${item.type === 'success' ? 'bg-prism-blue' :
                 item.type === 'warning' ? 'bg-amber-500' :
                 item.type === 'error' ? 'bg-red-500' :
                 'bg-zinc-500'}

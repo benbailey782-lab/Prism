@@ -1,7 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Brain,
-  ChevronLeft,
   ChevronRight,
   MessageSquare,
   Lightbulb,
@@ -10,8 +8,32 @@ import {
   Users,
   BookOpen,
   FileText,
-  BarChart3
+  BarChart3,
+  Settings
 } from 'lucide-react';
+
+// Prism Logo Mark SVG component
+const PrismLogo = ({ className = "w-6 h-6" }) => (
+  <svg className={className} viewBox="0 0 280 199" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <ellipse opacity="0.6" cx="140" cy="139" rx="140" ry="60" fill="url(#paint0_linear_sidebar)"/>
+    <ellipse opacity="0.6" cx="139.5" cy="100.5" rx="137.5" ry="57.5" fill="url(#paint1_linear_sidebar)"/>
+    <ellipse opacity="0.6" cx="140" cy="60" rx="140" ry="60" fill="url(#paint2_linear_sidebar)"/>
+    <defs>
+      <linearGradient id="paint0_linear_sidebar" x1="0" y1="139" x2="280" y2="139" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#4AA8D8"/>
+        <stop offset="1" stopColor="#C888B0"/>
+      </linearGradient>
+      <linearGradient id="paint1_linear_sidebar" x1="2" y1="100" x2="277" y2="100" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#6078C8"/>
+        <stop offset="1" stopColor="#9878C0"/>
+      </linearGradient>
+      <linearGradient id="paint2_linear_sidebar" x1="0" y1="59.52" x2="280" y2="59.52" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#7B8EC8"/>
+        <stop offset="1" stopColor="#9890C8"/>
+      </linearGradient>
+    </defs>
+  </svg>
+);
 
 const SECTIONS = {
   main: 'Main',
@@ -28,6 +50,7 @@ const NAV_ITEMS = [
   { id: 'knowledge', label: 'Knowledge', icon: BookOpen, section: 'data' },
   { id: 'transcripts', label: 'Transcripts', icon: FileText, section: 'data' },
   { id: 'stats', label: 'Stats', icon: BarChart3, section: 'data' },
+  { id: 'settings', label: 'Settings', icon: Settings, section: 'data' },
 ];
 
 export default function Sidebar({ activeView, onNavigate, collapsed, onToggleCollapse, health }) {
@@ -54,8 +77,8 @@ export default function Sidebar({ activeView, onNavigate, collapsed, onToggleCol
       {/* Logo */}
       <div className="p-4 border-b border-white/5">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl animated-gradient flex items-center justify-center flex-shrink-0 shadow-lg">
-            <Brain className="w-6 h-6 text-white" />
+          <div className="w-11 h-11 rounded-xl bg-[#09090b] flex items-center justify-center flex-shrink-0 shadow-lg border border-white/5">
+            <PrismLogo className="w-7 h-5" />
           </div>
           <AnimatePresence mode="wait">
             {!collapsed && (
@@ -66,7 +89,7 @@ export default function Sidebar({ activeView, onNavigate, collapsed, onToggleCol
                 transition={{ duration: 0.15 }}
                 className="overflow-hidden"
               >
-                <h1 className="text-lg font-semibold text-white truncate">Sales Brain</h1>
+                <h1 className="text-lg font-semibold text-white truncate">Prism</h1>
                 <p className="text-xs text-zinc-500 truncate">Intelligence Engine</p>
               </motion.div>
             )}
@@ -107,12 +130,12 @@ export default function Sidebar({ activeView, onNavigate, collapsed, onToggleCol
                       w-full flex items-center gap-3 px-3 py-2.5 rounded-xl
                       transition-all duration-200 text-sm font-medium relative
                       ${isActive
-                        ? 'text-green-400'
+                        ? 'text-prism-blue'
                         : 'text-zinc-400 hover:text-zinc-200'}
                     `}
                     style={isActive ? {
-                      background: 'var(--glow-green)',
-                      boxShadow: 'inset 0 0 20px rgba(34, 197, 94, 0.1)'
+                      background: 'var(--glow-prism)',
+                      boxShadow: 'inset 0 0 20px rgba(96, 120, 200, 0.1)'
                     } : undefined}
                     title={collapsed ? item.label : undefined}
                   >
@@ -120,13 +143,13 @@ export default function Sidebar({ activeView, onNavigate, collapsed, onToggleCol
                     {isActive && (
                       <motion.div
                         layoutId="activeIndicator"
-                        className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-green-500 rounded-r-full"
+                        className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-prism-blue rounded-r-full"
                         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                       />
                     )}
 
                     <item.icon className={`w-5 h-5 flex-shrink-0 ${
-                      isActive ? 'text-green-400' : ''
+                      isActive ? 'text-prism-blue' : ''
                     }`} />
 
                     <AnimatePresence mode="wait">
@@ -162,7 +185,7 @@ export default function Sidebar({ activeView, onNavigate, collapsed, onToggleCol
             <div className="flex items-center gap-2">
               <div className={`
                 w-2 h-2 rounded-full flex-shrink-0
-                ${health.aiEnabled ? 'bg-green-500 pulse-glow' : 'bg-amber-500'}
+                ${health.aiEnabled ? 'bg-prism-blue pulse-glow' : 'bg-amber-500'}
               `} />
               <span className="text-xs text-zinc-400 truncate">
                 {health.aiEnabled
@@ -180,7 +203,7 @@ export default function Sidebar({ activeView, onNavigate, collapsed, onToggleCol
         <div className="p-4 border-t border-white/5 flex justify-center">
           <div className={`
             w-2 h-2 rounded-full
-            ${health.aiEnabled ? 'bg-green-500 pulse-glow' : 'bg-amber-500'}
+            ${health.aiEnabled ? 'bg-prism-blue pulse-glow' : 'bg-amber-500'}
           `} />
         </div>
       )}

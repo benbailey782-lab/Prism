@@ -21,7 +21,7 @@ const KNOWLEDGE_TYPES = [
 const colorClasses = {
   blue: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
   purple: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
-  green: 'bg-green-500/20 text-green-400 border-green-500/30',
+  green: 'bg-prism-blue/20 text-prism-blue border-prism-blue/30',
   amber: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
   yellow: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
   indigo: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30',
@@ -210,14 +210,14 @@ function SegmentBrowser() {
           placeholder="Search segments..."
           className="w-full pl-10 pr-4 py-2 bg-zinc-800/50 border border-zinc-700/50 rounded-lg
                      text-sm text-zinc-200 placeholder-zinc-500
-                     focus:outline-none focus:border-green-500/50"
+                     focus:outline-none focus:border-prism-blue/50"
         />
       </div>
 
       {/* Segments List */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full" />
+          <div className="animate-spin w-6 h-6 border-2 border-prism-blue border-t-transparent rounded-full" />
         </div>
       ) : error ? (
         <div className="text-center py-12 text-red-400">

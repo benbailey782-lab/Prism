@@ -22,7 +22,7 @@ export default function GlassCard({
   };
 
   const glowClasses = {
-    green: 'glow-green',
+    green: 'glow-prism',
     blue: 'glow-blue',
     purple: 'glow-purple',
     amber: 'glow-amber',

@@ -362,7 +362,7 @@ function buildSynthesisPrompt(query, intent, context, sources) {
 
   const instruction = intentInstructions[intent.intent] || intentInstructions[INTENT_TYPES.GENERAL];
 
-  return `You are Sales Brain, a personal sales intelligence assistant. Answer the user's question based ONLY on the following context from their sales data. Be concise and actionable.
+  return `You are Prism, a personal sales intelligence assistant. Answer the user's question based ONLY on the following context from their sales data. Be concise and actionable.
 
 ${instruction}
 

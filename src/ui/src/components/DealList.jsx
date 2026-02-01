@@ -8,7 +8,7 @@ import DealDetail from './DealDetail';
 import Modal from './shared/Modal';
 
 const STATUS_CONFIG = {
-  active: { label: 'Active', color: 'bg-green-500', textColor: 'text-green-400' },
+  active: { label: 'Active', color: 'bg-prism-blue', textColor: 'text-prism-blue' },
   won: { label: 'Won', color: 'bg-blue-500', textColor: 'text-blue-400' },
   lost: { label: 'Lost', color: 'bg-red-500', textColor: 'text-red-400' },
   stalled: { label: 'Stalled', color: 'bg-amber-500', textColor: 'text-amber-400' },
@@ -43,7 +43,7 @@ function CreateDealModal({ isOpen, onClose, onCreate }) {
             required
             value={formData.companyName}
             onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-green-500 transition-colors"
+            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-prism-blue transition-colors"
           />
         </div>
         <div className="grid grid-cols-2 gap-4">
@@ -53,7 +53,7 @@ function CreateDealModal({ isOpen, onClose, onCreate }) {
               type="text"
               value={formData.contactName}
               onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-green-500 transition-colors"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-prism-blue transition-colors"
             />
           </div>
           <div>
@@ -62,7 +62,7 @@ function CreateDealModal({ isOpen, onClose, onCreate }) {
               type="text"
               value={formData.contactRole}
               onChange={(e) => setFormData({ ...formData, contactRole: e.target.value })}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-green-500 transition-colors"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-prism-blue transition-colors"
             />
           </div>
         </div>
@@ -73,7 +73,7 @@ function CreateDealModal({ isOpen, onClose, onCreate }) {
               type="number"
               value={formData.valueAmount}
               onChange={(e) => setFormData({ ...formData, valueAmount: e.target.value })}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-green-500 transition-colors"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-prism-blue transition-colors"
             />
           </div>
           <div>
@@ -81,7 +81,7 @@ function CreateDealModal({ isOpen, onClose, onCreate }) {
             <select
               value={formData.status}
               onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-green-500 transition-colors"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-prism-blue transition-colors"
             >
               <option value="active">Active</option>
               <option value="won">Won</option>
@@ -96,7 +96,7 @@ function CreateDealModal({ isOpen, onClose, onCreate }) {
             value={formData.notes}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
             rows={3}
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-green-500 transition-colors resize-none"
+            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-prism-blue transition-colors resize-none"
           />
         </div>
         <div className="flex gap-3 pt-2">
@@ -109,7 +109,7 @@ function CreateDealModal({ isOpen, onClose, onCreate }) {
           </button>
           <button
             type="submit"
-            className="flex-1 bg-green-600 hover:bg-green-500 text-white px-4 py-2.5 rounded-xl font-medium transition-colors"
+            className="flex-1 bg-prism-500 hover:bg-prism-blue text-white px-4 py-2.5 rounded-xl font-medium transition-colors"
           >
             Create Deal
           </button>
@@ -135,7 +135,7 @@ function MeddpiccProgress({ meddpicc }) {
           <div
             key={letter}
             className={`w-5 h-5 rounded text-[10px] flex items-center justify-center font-medium ${
-              status === 'identified' ? 'bg-green-500/30 text-green-400 border border-green-500/50' :
+              status === 'identified' ? 'bg-prism-blue/30 text-prism-blue border border-prism-blue/50' :
               status === 'partial' ? 'bg-amber-500/30 text-amber-400 border border-amber-500/50' :
               'bg-zinc-700/50 text-zinc-500 border border-zinc-600'
             }`}
@@ -289,7 +289,7 @@ function DealList({ onSelect }) {
         </div>
         <button
           onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white px-4 py-2.5 rounded-xl font-medium transition-colors"
+          className="flex items-center gap-2 bg-prism-500 hover:bg-prism-blue text-white px-4 py-2.5 rounded-xl font-medium transition-colors"
         >
           <Plus className="w-4 h-4" />
           New Deal
@@ -298,7 +298,7 @@ function DealList({ onSelect }) {
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full" />
+          <div className="animate-spin w-6 h-6 border-2 border-prism-blue border-t-transparent rounded-full" />
         </div>
       ) : error ? (
         <div className="glass-card p-8 text-center">

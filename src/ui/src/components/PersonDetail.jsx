@@ -9,7 +9,7 @@ import {
 
 const RELATIONSHIP_COLORS = {
   prospect: 'bg-amber-500/20 text-amber-400',
-  customer: 'bg-green-500/20 text-green-400',
+  customer: 'bg-prism-blue/20 text-prism-blue',
   colleague: 'bg-blue-500/20 text-blue-400',
   mentor: 'bg-purple-500/20 text-purple-400',
   manager: 'bg-indigo-500/20 text-indigo-400',
@@ -95,8 +95,8 @@ function PersonAIBrief({ personId }) {
       >
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center glow-green-subtle">
-              <Brain className="w-5 h-5 text-green-400" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-prism-blue/20 to-prism-400/20 flex items-center justify-center glow-prism-subtle">
+              <Brain className="w-5 h-5 text-prism-blue" />
             </div>
             <div>
               <h3 className="font-medium text-white">AI Brief</h3>
@@ -106,7 +106,7 @@ function PersonAIBrief({ personId }) {
           <button
             onClick={handleRegenerate}
             disabled={refreshing}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm bg-green-500/10 text-green-400 hover:bg-green-500/20 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm bg-prism-blue/10 text-prism-blue hover:bg-prism-blue/20 transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
             {refreshing ? 'Generating...' : 'Generate Brief'}
@@ -125,8 +125,8 @@ function PersonAIBrief({ personId }) {
     >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center glow-green-subtle">
-            <Brain className="w-5 h-5 text-green-400" />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-prism-blue/20 to-prism-400/20 flex items-center justify-center glow-prism-subtle">
+            <Brain className="w-5 h-5 text-prism-blue" />
           </div>
           <div>
             <h3 className="font-medium text-white">AI Brief</h3>
@@ -152,7 +152,7 @@ function PersonAIBrief({ personId }) {
           {summary.key_traits && (
             <div className="flex flex-wrap gap-2 mt-3">
               {summary.key_traits.map((trait, i) => (
-                <span key={i} className="px-2 py-1 rounded-lg text-xs bg-green-500/10 text-green-400 border border-green-500/20">
+                <span key={i} className="px-2 py-1 rounded-lg text-xs bg-prism-blue/10 text-prism-blue border border-prism-blue/20">
                   {trait}
                 </span>
               ))}
@@ -358,7 +358,7 @@ export default function PersonDetail({ person, onBack, onNavigateToDeal }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full" />
+        <div className="animate-spin w-6 h-6 border-2 border-prism-blue border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -370,7 +370,7 @@ export default function PersonDetail({ person, onBack, onNavigateToDeal }) {
         <p className="text-red-400">Person not found</p>
         <button
           onClick={onBack}
-          className="mt-4 text-green-400 hover:text-green-300"
+          className="mt-4 text-prism-blue hover:text-prism-300"
         >
           Go back
         </button>
@@ -436,7 +436,7 @@ export default function PersonDetail({ person, onBack, onNavigateToDeal }) {
                 type="text"
                 value={editForm.name}
                 onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                className="w-full bg-zinc-700/50 border border-zinc-600 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-green-500"
+                className="w-full bg-zinc-700/50 border border-zinc-600 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-prism-blue"
               />
             </div>
             <div>
@@ -445,7 +445,7 @@ export default function PersonDetail({ person, onBack, onNavigateToDeal }) {
                 type="text"
                 value={editForm.role}
                 onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                className="w-full bg-zinc-700/50 border border-zinc-600 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-green-500"
+                className="w-full bg-zinc-700/50 border border-zinc-600 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-prism-blue"
               />
             </div>
             <div>
@@ -454,7 +454,7 @@ export default function PersonDetail({ person, onBack, onNavigateToDeal }) {
                 type="text"
                 value={editForm.company}
                 onChange={(e) => setEditForm({ ...editForm, company: e.target.value })}
-                className="w-full bg-zinc-700/50 border border-zinc-600 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-green-500"
+                className="w-full bg-zinc-700/50 border border-zinc-600 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-prism-blue"
               />
             </div>
             <div>
@@ -462,7 +462,7 @@ export default function PersonDetail({ person, onBack, onNavigateToDeal }) {
               <select
                 value={editForm.relationship_type}
                 onChange={(e) => setEditForm({ ...editForm, relationship_type: e.target.value })}
-                className="w-full bg-zinc-700/50 border border-zinc-600 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-green-500"
+                className="w-full bg-zinc-700/50 border border-zinc-600 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-prism-blue"
               >
                 <option value="prospect">Prospect</option>
                 <option value="customer">Customer</option>
@@ -478,7 +478,7 @@ export default function PersonDetail({ person, onBack, onNavigateToDeal }) {
                 type="email"
                 value={editForm.email}
                 onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                className="w-full bg-zinc-700/50 border border-zinc-600 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-green-500"
+                className="w-full bg-zinc-700/50 border border-zinc-600 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-prism-blue"
               />
             </div>
             <div>
@@ -487,7 +487,7 @@ export default function PersonDetail({ person, onBack, onNavigateToDeal }) {
                 type="tel"
                 value={editForm.phone}
                 onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                className="w-full bg-zinc-700/50 border border-zinc-600 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-green-500"
+                className="w-full bg-zinc-700/50 border border-zinc-600 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-prism-blue"
               />
             </div>
             <div className="col-span-2">
@@ -496,7 +496,7 @@ export default function PersonDetail({ person, onBack, onNavigateToDeal }) {
                 value={editForm.notes}
                 onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
                 rows={3}
-                className="w-full bg-zinc-700/50 border border-zinc-600 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-green-500"
+                className="w-full bg-zinc-700/50 border border-zinc-600 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-prism-blue"
               />
             </div>
           </div>
@@ -509,7 +509,7 @@ export default function PersonDetail({ person, onBack, onNavigateToDeal }) {
             </button>
             <button
               onClick={handleSave}
-              className="px-3 py-1.5 rounded text-sm bg-green-600 hover:bg-green-500 text-white flex items-center gap-1"
+              className="px-3 py-1.5 rounded text-sm bg-prism-500 hover:bg-prism-blue text-white flex items-center gap-1"
             >
               <Save className="w-3.5 h-3.5" />
               Save
@@ -544,8 +544,8 @@ export default function PersonDetail({ person, onBack, onNavigateToDeal }) {
               href={`tel:${personData.phone}`}
               className="flex items-center gap-3 p-3 bg-zinc-700/30 rounded-lg hover:bg-zinc-700/50 transition-colors"
             >
-              <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                <Phone className="w-5 h-5 text-green-400" />
+              <div className="w-10 h-10 rounded-lg bg-prism-blue/10 flex items-center justify-center">
+                <Phone className="w-5 h-5 text-prism-blue" />
               </div>
               <div>
                 <div className="text-xs text-zinc-500">Phone</div>
@@ -612,7 +612,7 @@ export default function PersonDetail({ person, onBack, onNavigateToDeal }) {
                 <div className="flex items-center justify-between mb-2">
                   <span className={`text-xs px-2 py-0.5 rounded-full ${
                     segment.classification === 'objection' ? 'bg-red-500/10 text-red-400' :
-                    segment.classification === 'buying_signal' ? 'bg-green-500/10 text-green-400' :
+                    segment.classification === 'buying_signal' ? 'bg-prism-blue/10 text-prism-blue' :
                     segment.classification === 'pain_point' ? 'bg-amber-500/10 text-amber-400' :
                     segment.classification === 'decision_criteria' ? 'bg-blue-500/10 text-blue-400' :
                     'bg-zinc-700 text-zinc-400'

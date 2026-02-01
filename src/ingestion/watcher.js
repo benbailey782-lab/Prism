@@ -7,51 +7,81 @@ import { processTranscript } from '../processing/processor.js';
 
 const SUPPORTED_EXTENSIONS = ['.txt', '.md', '.json'];
 
+// Files to ignore (especially for Google Drive sync)
+const IGNORED_PATTERNS = [
+  /(^|[\/\\])\../,  // dotfiles
+  /\.tmp$/,          // temp files
+  /\.gsheet$/,       // Google Sheets
+  /\.gdoc$/,         // Google Docs
+  /~\$.*/,           // Office temp files
+  /\.crdownload$/,   // Chrome downloads
+  /\.part$/          // Partial downloads
+];
+
+// Module-level watcher instance for restartWatcher
+let currentWatcher = null;
+
+/**
+ * Check if a file should be ignored
+ */
+function shouldIgnore(filepath) {
+  const filename = path.basename(filepath);
+  return IGNORED_PATTERNS.some(pattern => pattern.test(filename) || pattern.test(filepath));
+}
+
 /**
  * Start watching a folder for new transcript files
  */
 export function startWatcher(watchFolder, options = {}) {
   const { onNewFile, onError, processImmediately = true } = options;
-  
+
   // Ensure watch folder exists
   if (!fs.existsSync(watchFolder)) {
     fs.mkdirSync(watchFolder, { recursive: true });
     console.log(`Created watch folder: ${watchFolder}`);
   }
-  
+
   console.log(`Watching for transcripts in: ${watchFolder}`);
-  
+
   const watcher = chokidar.watch(watchFolder, {
-    ignored: /(^|[\/\\])\../, // ignore dotfiles
+    ignored: shouldIgnore,
     persistent: true,
     ignoreInitial: false, // Process existing files on startup
     awaitWriteFinish: {
-      stabilityThreshold: 2000,
+      stabilityThreshold: 5000,  // 5 seconds - longer for Google Drive sync
       pollInterval: 100
-    }
+    },
+    usePolling: false,
+    depth: 2  // Watch subdirectories up to 2 levels deep
   });
-  
+
   watcher.on('add', async (filepath) => {
     const ext = path.extname(filepath).toLowerCase();
-    
+
     if (!SUPPORTED_EXTENSIONS.includes(ext)) {
       console.log(`Skipping unsupported file: ${filepath}`);
       return;
     }
-    
+
+    // Double-check ignore patterns
+    if (shouldIgnore(filepath)) {
+      console.log(`Skipping ignored file: ${filepath}`);
+      return;
+    }
+
     // Check if already processed
     if (transcriptExists(filepath)) {
       console.log(`Already processed: ${filepath}`);
       return;
     }
-    
+
     console.log(`New transcript detected: ${filepath}`);
-    
+
     try {
       // Parse the file
       const parsed = parseTranscript(filepath);
       const filenameMeta = parseFilenameMetadata(parsed.filename);
-      
+
       // Create transcript record
       const transcriptId = createTranscript({
         filename: parsed.filename,
@@ -61,22 +91,21 @@ export function startWatcher(watchFolder, options = {}) {
         callDate: filenameMeta.date || parsed.callDate,
         context: filenameMeta.callType || parsed.context
       });
-      
+
       console.log(`Transcript saved: ${transcriptId}`);
-      
+
       // Trigger processing if enabled
       if (processImmediately) {
         console.log(`Queuing for processing: ${transcriptId}`);
-        // Processing happens async - will be implemented with Claude API
         processTranscript(transcriptId).catch(err => {
           console.error(`Processing failed for ${transcriptId}:`, err.message);
         });
       }
-      
+
       if (onNewFile) {
         onNewFile({ transcriptId, filepath, parsed });
       }
-      
+
     } catch (err) {
       console.error(`Error processing file ${filepath}:`, err);
       if (onError) {
@@ -84,19 +113,48 @@ export function startWatcher(watchFolder, options = {}) {
       }
     }
   });
-  
+
   watcher.on('error', (error) => {
     console.error('Watcher error:', error);
     if (onError) {
       onError(error);
     }
   });
-  
+
   watcher.on('ready', () => {
     console.log('Initial scan complete. Watching for changes...');
   });
-  
+
+  // Store as current watcher
+  currentWatcher = watcher;
+
   return watcher;
+}
+
+/**
+ * Restart watcher with a new folder
+ */
+export function restartWatcher(newFolder, options = {}) {
+  console.log(`Restarting watcher with folder: ${newFolder}`);
+
+  // Close existing watcher
+  if (currentWatcher) {
+    currentWatcher.close().then(() => {
+      console.log('Previous watcher closed');
+    }).catch(err => {
+      console.error('Error closing watcher:', err);
+    });
+  }
+
+  // Start new watcher
+  return startWatcher(newFolder, options);
+}
+
+/**
+ * Get current watcher instance
+ */
+export function getWatcher() {
+  return currentWatcher;
 }
 
 /**
@@ -105,18 +163,19 @@ export function startWatcher(watchFolder, options = {}) {
 export async function importFolder(folderPath) {
   const files = fs.readdirSync(folderPath);
   const results = [];
-  
+
   for (const file of files) {
     const filepath = path.join(folderPath, file);
     const ext = path.extname(file).toLowerCase();
-    
+
     if (!SUPPORTED_EXTENSIONS.includes(ext)) continue;
+    if (shouldIgnore(filepath)) continue;
     if (transcriptExists(filepath)) continue;
-    
+
     try {
       const parsed = parseTranscript(filepath);
       const filenameMeta = parseFilenameMetadata(parsed.filename);
-      
+
       const transcriptId = createTranscript({
         filename: parsed.filename,
         filepath: filepath,
@@ -125,20 +184,22 @@ export async function importFolder(folderPath) {
         callDate: filenameMeta.date || parsed.callDate,
         context: filenameMeta.callType || parsed.context
       });
-      
+
       results.push({ transcriptId, filepath, success: true });
       console.log(`Imported: ${file}`);
-      
+
     } catch (err) {
       results.push({ filepath, success: false, error: err.message });
       console.error(`Failed to import ${file}:`, err.message);
     }
   }
-  
+
   return results;
 }
 
 export default {
   startWatcher,
+  restartWatcher,
+  getWatcher,
   importFolder
 };

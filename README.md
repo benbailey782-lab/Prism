@@ -1,4 +1,4 @@
-# Sales Brain
+# Prism
 
 Personal learning and insights engine for sales professionals. Transform call transcripts into searchable institutional memory.
 
@@ -61,7 +61,7 @@ npm run dev
 ## Project Structure
 
 ```
-sales-brain/
+prism/
 ├── data/                   # SQLite database
 ├── transcripts/            # Watch folder (drop files here)
 ├── src/

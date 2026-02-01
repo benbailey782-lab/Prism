@@ -19,7 +19,7 @@ const RELATIONSHIP_TYPES = [
 
 const RELATIONSHIP_COLORS = {
   prospect: 'bg-amber-500/20 text-amber-400',
-  customer: 'bg-green-500/20 text-green-400',
+  customer: 'bg-prism-blue/20 text-prism-blue',
   colleague: 'bg-blue-500/20 text-blue-400',
   mentor: 'bg-purple-500/20 text-purple-400',
   manager: 'bg-indigo-500/20 text-indigo-400',
@@ -54,7 +54,7 @@ function CreatePersonModal({ isOpen, onClose, onCreate }) {
             required
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-green-500 transition-colors"
+            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-prism-blue transition-colors"
           />
         </div>
         <div className="grid grid-cols-2 gap-4">
@@ -65,7 +65,7 @@ function CreatePersonModal({ isOpen, onClose, onCreate }) {
               value={formData.role}
               onChange={(e) => setFormData({ ...formData, role: e.target.value })}
               placeholder="e.g., VP of Engineering"
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-green-500 transition-colors"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-prism-blue transition-colors"
             />
           </div>
           <div>
@@ -74,7 +74,7 @@ function CreatePersonModal({ isOpen, onClose, onCreate }) {
               type="text"
               value={formData.company}
               onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-green-500 transition-colors"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-prism-blue transition-colors"
             />
           </div>
         </div>
@@ -83,7 +83,7 @@ function CreatePersonModal({ isOpen, onClose, onCreate }) {
           <select
             value={formData.relationshipType}
             onChange={(e) => setFormData({ ...formData, relationshipType: e.target.value })}
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-green-500 transition-colors"
+            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-prism-blue transition-colors"
           >
             <option value="prospect">Prospect</option>
             <option value="customer">Customer</option>
@@ -100,7 +100,7 @@ function CreatePersonModal({ isOpen, onClose, onCreate }) {
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-green-500 transition-colors"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-prism-blue transition-colors"
             />
           </div>
           <div>
@@ -109,7 +109,7 @@ function CreatePersonModal({ isOpen, onClose, onCreate }) {
               type="tel"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-green-500 transition-colors"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 focus:outline-none focus:border-prism-blue transition-colors"
             />
           </div>
         </div>
@@ -120,7 +120,7 @@ function CreatePersonModal({ isOpen, onClose, onCreate }) {
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
             rows={3}
             placeholder="Any notes about this person..."
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-green-500 transition-colors resize-none"
+            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-prism-blue transition-colors resize-none"
           />
         </div>
         <div className="flex gap-3 pt-2">
@@ -133,7 +133,7 @@ function CreatePersonModal({ isOpen, onClose, onCreate }) {
           </button>
           <button
             type="submit"
-            className="flex-1 bg-green-600 hover:bg-green-500 text-white px-4 py-2.5 rounded-xl font-medium transition-colors"
+            className="flex-1 bg-prism-500 hover:bg-prism-blue text-white px-4 py-2.5 rounded-xl font-medium transition-colors"
           >
             Add Person
           </button>
@@ -186,7 +186,7 @@ function PersonCard({ person, onClick, index = 0 }) {
               <a
                 href={`mailto:${person.email}`}
                 onClick={(e) => e.stopPropagation()}
-                className="flex items-center gap-1 hover:text-green-400 transition-colors"
+                className="flex items-center gap-1 hover:text-prism-blue transition-colors"
               >
                 <Mail className="w-3.5 h-3.5" />
                 {person.email}
@@ -196,7 +196,7 @@ function PersonCard({ person, onClick, index = 0 }) {
               <a
                 href={`tel:${person.phone}`}
                 onClick={(e) => e.stopPropagation()}
-                className="flex items-center gap-1 hover:text-green-400 transition-colors"
+                className="flex items-center gap-1 hover:text-prism-blue transition-colors"
               >
                 <Phone className="w-3.5 h-3.5" />
                 {person.phone}
@@ -288,7 +288,7 @@ function PeopleList({ onSelect }) {
         </div>
         <button
           onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white px-4 py-2.5 rounded-xl font-medium transition-colors"
+          className="flex items-center gap-2 bg-prism-500 hover:bg-prism-blue text-white px-4 py-2.5 rounded-xl font-medium transition-colors"
         >
           <Plus className="w-4 h-4" />
           Add Person
@@ -312,7 +312,7 @@ function PeopleList({ onSelect }) {
                 flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-medium
                 transition-all border
                 ${isActive
-                  ? 'bg-green-500/20 text-green-400 border-green-500/30 glow-green-subtle'
+                  ? 'bg-prism-blue/20 text-prism-blue border-prism-blue/30 glow-prism-subtle'
                   : 'bg-white/[0.02] text-zinc-400 border-white/5 hover:bg-white/[0.05] hover:text-zinc-200'
                 }
               `}
@@ -337,14 +337,14 @@ function PeopleList({ onSelect }) {
           placeholder="Search people..."
           className="w-full pl-11 pr-4 py-2.5 bg-white/[0.02] border border-white/5 rounded-xl
                      text-sm text-zinc-200 placeholder-zinc-500
-                     focus:outline-none focus:border-green-500/50 focus:bg-white/[0.04] transition-colors"
+                     focus:outline-none focus:border-prism-blue/50 focus:bg-white/[0.04] transition-colors"
         />
       </div>
 
       {/* People List */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full" />
+          <div className="animate-spin w-6 h-6 border-2 border-prism-blue border-t-transparent rounded-full" />
         </div>
       ) : error ? (
         <div className="glass-card p-8 text-center">

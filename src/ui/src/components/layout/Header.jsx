@@ -69,14 +69,14 @@ export default function Header({ health, onMenuClick }) {
                   hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full
                   text-xs font-medium transition-colors
                   ${health.aiEnabled
-                    ? 'bg-green-500/10 text-green-400'
+                    ? 'bg-prism-blue/10 text-prism-blue'
                     : 'bg-amber-500/10 text-amber-400'
                   }
                 `}
               >
                 <div className={`
                   w-1.5 h-1.5 rounded-full
-                  ${health.aiEnabled ? 'bg-green-500 pulse-glow' : 'bg-amber-500'}
+                  ${health.aiEnabled ? 'bg-prism-blue pulse-glow' : 'bg-amber-500'}
                 `} />
                 <span>
                   {health.aiEnabled
