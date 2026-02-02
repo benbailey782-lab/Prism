@@ -377,7 +377,8 @@ For each segment, identify:
 Transcript:
 ${transcript.raw_content}
 
-Respond ONLY with valid JSON, no other text:
+IMPORTANT: Return ONLY a JSON object. Do NOT include any explanation, markdown formatting, code fences, or text outside the JSON structure. Your entire response must be parseable by JSON.parse().
+
 {
   "segments": [
     {
@@ -392,26 +393,50 @@ Respond ONLY with valid JSON, no other text:
   ]
 }`;
 
-  const text = await callAI(prompt);
-  
-  // Extract JSON from response (handle markdown code blocks)
+  const text = await callAI(prompt, { maxTokens: 8192 });
+
+  // Extract JSON from response (handle markdown code blocks, preamble text)
   let jsonStr = text;
+
+  // Strip markdown code fences if present
   const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (codeBlockMatch) {
     jsonStr = codeBlockMatch[1];
   } else {
+    // Strip any preamble text before the JSON object
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       jsonStr = jsonMatch[0];
     }
   }
-  
+
+  // Detect truncation: unbalanced braces/brackets
+  const openBraces = (jsonStr.match(/\{/g) || []).length;
+  const closeBraces = (jsonStr.match(/\}/g) || []).length;
+  const openBrackets = (jsonStr.match(/\[/g) || []).length;
+  const closeBrackets = (jsonStr.match(/\]/g) || []).length;
+
+  if (openBraces !== closeBraces || openBrackets !== closeBrackets) {
+    console.warn(`Segmentation response appears truncated (braces: ${openBraces}/${closeBraces}, brackets: ${openBrackets}/${closeBrackets}). Retrying with higher token limit...`);
+
+    // Retry with even higher limit
+    const retryText = await callAI(prompt, { maxTokens: 16384 });
+    jsonStr = retryText;
+    const retryCodeBlock = retryText.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (retryCodeBlock) {
+      jsonStr = retryCodeBlock[1];
+    } else {
+      const retryJsonMatch = retryText.match(/\{[\s\S]*\}/);
+      if (retryJsonMatch) jsonStr = retryJsonMatch[0];
+    }
+  }
+
   try {
     const result = JSON.parse(jsonStr);
     return result.segments || [];
   } catch (err) {
     console.error('Failed to parse segmentation response:', err.message);
-    console.error('Raw response:', text.substring(0, 500));
+    console.error('Raw response (first 500 chars):', text.substring(0, 500));
     throw new Error('Could not parse segmentation response');
   }
 }

@@ -493,6 +493,19 @@ export function initDatabase() {
     CREATE INDEX IF NOT EXISTS idx_living_sections_entity ON living_sections(entity_type, entity_id);
   `);
 
+  // ============================================
+  // PHASE 4.5 INDEXES — Performance & Query Path
+  // ============================================
+
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_segments_confidence ON segments(confidence DESC);
+    CREATE INDEX IF NOT EXISTS idx_people_updated ON people(updated_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_deals_last_activity ON deals(last_activity_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_living_sections_stale ON living_sections(is_stale);
+    CREATE INDEX IF NOT EXISTS idx_deal_meddpicc_letter ON deal_meddpicc(letter);
+    CREATE INDEX IF NOT EXISTS idx_insights_confidence ON insights(confidence DESC);
+  `);
+
   // Seed defaults after table creation
   seedDefaults(db);
 
