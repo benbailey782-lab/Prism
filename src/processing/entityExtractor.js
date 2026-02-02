@@ -120,6 +120,36 @@ export async function extractEntities(transcript, callAI) {
       }
     }
 
+    // Deduplicate people extracted from this transcript
+    // (AI may extract "Sarah Chen" and "Sarah" as separate entities)
+    if (result.people && result.people.length > 1) {
+      const deduped = [];
+      const merged = new Set();
+
+      for (let i = 0; i < result.people.length; i++) {
+        if (merged.has(i)) continue;
+
+        let primary = { ...result.people[i] };
+
+        for (let j = i + 1; j < result.people.length; j++) {
+          if (merged.has(j)) continue;
+
+          const other = result.people[j];
+          const isSamePerson = checkSamePersonExtracted(primary, other);
+
+          if (isSamePerson) {
+            // Merge: keep the more complete record
+            primary = mergeExtractedPeople(primary, other);
+            merged.add(j);
+          }
+        }
+
+        deduped.push(primary);
+      }
+
+      result.people = deduped;
+    }
+
     if (result.dealContext && result.dealContext.companyName) {
       const dealMatch = existingDeals.find(d =>
         d.company_name.toLowerCase() === result.dealContext.companyName.toLowerCase()
@@ -188,24 +218,50 @@ Respond ONLY with valid JSON:
 function findPersonMatch(extracted, existing) {
   if (!extracted.name) return null;
 
-  const nameLower = extracted.name.toLowerCase();
+  const nameLower = extracted.name.toLowerCase().trim();
 
   // Exact name match
   const exactMatch = existing.find(p =>
-    p.name.toLowerCase() === nameLower
+    p.name.toLowerCase().trim() === nameLower
   );
   if (exactMatch) return exactMatch;
 
-  // Partial name match (first name or last name)
-  const nameParts = nameLower.split(' ');
+  const nameParts = nameLower.split(/\s+/).filter(p => p.length > 1);
+  const extractedCompany = (extracted.company || '').toLowerCase().trim();
+
   if (nameParts.length > 1) {
-    const partialMatch = existing.find(p => {
-      const existingParts = p.name.toLowerCase().split(' ');
-      return nameParts.some(part =>
-        existingParts.includes(part) && part.length > 2
-      );
+    // Strong match: 2+ name parts match (e.g., "Sarah Chen" vs "Sarah C. Chen")
+    const strongMatch = existing.find(p => {
+      const existingParts = p.name.toLowerCase().split(/\s+/).filter(ep => ep.length > 1);
+      const matchingParts = nameParts.filter(part => existingParts.includes(part));
+      return matchingParts.length >= 2;
     });
-    if (partialMatch) return partialMatch;
+    if (strongMatch) return strongMatch;
+
+    // Medium match: last name matches + same company
+    if (extractedCompany) {
+      const lastNameCompanyMatch = existing.find(p => {
+        const existingParts = p.name.toLowerCase().split(/\s+/);
+        const existingCompany = (p.company || '').toLowerCase().trim();
+        const lastNameMatches = existingParts[existingParts.length - 1] === nameParts[nameParts.length - 1];
+        return lastNameMatches && existingCompany === extractedCompany;
+      });
+      if (lastNameCompanyMatch) return lastNameCompanyMatch;
+    }
+
+    // Abbreviation match: "Sarah C." matches "Sarah Chen" (initial + first name + same company)
+    if (extractedCompany) {
+      const abbrMatch = existing.find(p => {
+        const existingParts = p.name.toLowerCase().split(/\s+/);
+        const existingCompany = (p.company || '').toLowerCase().trim();
+        if (existingCompany !== extractedCompany) return false;
+        // Check if first names match and one side has an initial
+        const firstMatch = existingParts[0] === nameParts[0];
+        const hasInitial = nameParts.some(p => p.length <= 2) || existingParts.some(p => p.length <= 2);
+        return firstMatch && hasInitial;
+      });
+      if (abbrMatch) return abbrMatch;
+    }
   }
 
   // Match by role + company (for unknown names like "the CFO")
@@ -237,6 +293,45 @@ function parseJSON(text) {
   }
 
   return JSON.parse(jsonStr.trim());
+}
+
+/**
+ * Check if two extracted people are likely the same person
+ */
+function checkSamePersonExtracted(a, b) {
+  const nameA = (a.name || '').toLowerCase().trim();
+  const nameB = (b.name || '').toLowerCase().trim();
+
+  // Exact match
+  if (nameA === nameB) return true;
+
+  // One name is a subset of the other (e.g., "Sarah" vs "Sarah Chen")
+  if (nameA.startsWith(nameB + ' ') || nameB.startsWith(nameA + ' ')) return true;
+  if (nameA.endsWith(' ' + nameB) || nameB.endsWith(' ' + nameA)) return true;
+
+  // Same company + same role = likely same person even with different name strings
+  if (a.company && b.company && a.role && b.role) {
+    if (a.company.toLowerCase() === b.company.toLowerCase() &&
+        a.role.toLowerCase() === b.role.toLowerCase()) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Merge two extracted person records, keeping the most complete data
+ */
+function mergeExtractedPeople(primary, secondary) {
+  return {
+    name: primary.name.length >= secondary.name.length ? primary.name : secondary.name,
+    role: primary.role || secondary.role,
+    company: primary.company || secondary.company,
+    relationshipType: primary.relationshipType || secondary.relationshipType,
+    keyInfo: [...new Set([...(primary.keyInfo || []), ...(secondary.keyInfo || [])])],
+    existingMatch: primary.existingMatch || secondary.existingMatch
+  };
 }
 
 export default {

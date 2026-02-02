@@ -22,10 +22,10 @@ M - METRICS: Quantified business impact, ROI expectations, success criteria
 E - ECONOMIC BUYER: The person who controls budget and can say yes
    Look for: "signs off", "approves", "budget owner", "final decision"
 
-D - DECISION CRITERIA: How they will evaluate and choose
+D1 - DECISION CRITERIA: How they will evaluate and choose
    Look for: requirements, must-haves, priorities, evaluation criteria
 
-D - DECISION PROCESS: Steps and stages to reach a decision
+D2 - DECISION PROCESS: Steps and stages to reach a decision
    Look for: "next steps", "then we'll", "approval process", timeline mentions
 
 P - PAPER PROCESS: Legal, procurement, security review requirements
@@ -34,10 +34,10 @@ P - PAPER PROCESS: Legal, procurement, security review requirements
 I - IDENTIFIED PAIN: The specific problem they're trying to solve
    Look for: frustrations, problems, challenges, "we're struggling with"
 
-C - CHAMPION: An internal advocate pushing for your solution
+C1 - CHAMPION: An internal advocate pushing for your solution
    Look for: enthusiasm, "I'll push for", setting up meetings, sharing info
 
-C - COMPETITION: Other vendors or alternatives being considered
+C2 - COMPETITION: Other vendors or alternatives being considered
    Look for: competitor names, "also looking at", "compared to", "currently using"
 
 Respond ONLY with valid JSON:
@@ -287,19 +287,33 @@ function formatMeddpiccStatus(rows) {
  * Map finding letter to database letter
  */
 function mapFindingLetter(letter) {
+  const normalized = (letter || '').toUpperCase().trim();
+
   const mapping = {
     'M': 'M',
     'E': 'E',
     'D1': 'D1',
     'D2': 'D2',
-    'D': 'D1', // Default D to Decision Criteria
     'P': 'P',
     'I': 'I',
     'C1': 'C1',
-    'C2': 'C2',
-    'C': 'C1' // Default C to Champion
+    'C2': 'C2'
   };
-  return mapping[letter];
+
+  if (mapping[normalized]) return mapping[normalized];
+
+  // Handle bare D/C with a warning — default but log the ambiguity
+  if (normalized === 'D') {
+    console.warn('MEDDPICC: AI returned bare "D" instead of D1/D2. Defaulting to D1 (Decision Criteria). Review prompt if this recurs.');
+    return 'D1';
+  }
+  if (normalized === 'C') {
+    console.warn('MEDDPICC: AI returned bare "C" instead of C1/C2. Defaulting to C1 (Champion). Review prompt if this recurs.');
+    return 'C1';
+  }
+
+  console.warn(`MEDDPICC: Unknown letter "${letter}" — skipping this finding.`);
+  return null;
 }
 
 /**
