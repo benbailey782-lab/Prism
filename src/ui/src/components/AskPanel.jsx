@@ -8,6 +8,7 @@ import {
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import GlassCard from './shared/GlassCard';
+import DealSummaryCard from './answers/DealSummaryCard';
 
 // Prism Logo Mark SVG component
 const PrismLogo = ({ className = "w-6 h-6" }) => (
@@ -410,10 +411,28 @@ export default function AskPanel({ onOpenCapture, onNavigate, onSelectItem }) {
                       </div>
                     )}
 
-                    {/* MEDDPICC mini visualization */}
-                    {currentAnswer?.visualizations?.some(v => v.type === 'meddpicc_scorecard') && (
-                      <div className="mt-4">
-                        <MeddpiccMini visualization={currentAnswer.visualizations.find(v => v.type === 'meddpicc_scorecard')} />
+                    {/* Rich visualizations — deal cards, MEDDPICC, etc. */}
+                    {currentAnswer?.visualizations?.length > 0 && !isStreaming && (
+                      <div className="space-y-3">
+                        {/* Deal Summary Card */}
+                        {currentAnswer.visualizations
+                          .filter(v => v.type === 'deal_summary')
+                          .map((v, idx) => (
+                            <DealSummaryCard
+                              key={`deal-${idx}`}
+                              visualization={v}
+                              onNavigate={onNavigate}
+                            />
+                          ))
+                        }
+
+                        {/* MEDDPICC mini scorecard (standalone, when no deal card) */}
+                        {currentAnswer.visualizations.some(v => v.type === 'meddpicc_scorecard') &&
+                         !currentAnswer.visualizations.some(v => v.type === 'deal_summary') && (
+                          <div className="mt-4">
+                            <MeddpiccMini visualization={currentAnswer.visualizations.find(v => v.type === 'meddpicc_scorecard')} />
+                          </div>
+                        )}
                       </div>
                     )}
 

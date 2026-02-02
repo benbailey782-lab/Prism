@@ -142,9 +142,12 @@ async function generateDealSection(dealId, sectionType, callAI) {
   // Compute hash for staleness tracking
   const inputData = {
     deal: { status: deal.status, value: deal.value_amount, updated: deal.updated_at },
-    meddpicc: meddpicc.map(m => ({ letter: m.letter, status: m.status })),
+    meddpicc: meddpicc.map(m => ({ letter: m.letter, status: m.status, confidence: m.confidence })),
     segmentCount: segments.length,
-    lastSegment: segments[0]?.id
+    lastSegment: segments[0]?.id,
+    segmentContentHash: crypto.createHash('md5')
+      .update(segments.slice(0, 10).map(s => s.summary || s.content?.substring(0, 100) || '').join('|'))
+      .digest('hex')
   };
   const dataHash = computeDataHash(inputData);
 
@@ -354,9 +357,12 @@ async function generatePersonSection(personId, sectionType, callAI) {
 
   // Compute hash for staleness tracking
   const inputData = {
-    person: { name: person.name, updated: person.updated_at },
+    person: { name: person.name, role: person.role, company: person.company, updated: person.updated_at },
     segmentCount: segments.length,
-    lastSegment: segments[0]?.id
+    lastSegment: segments[0]?.id,
+    segmentContentHash: crypto.createHash('md5')
+      .update(segments.slice(0, 15).map(s => s.summary || s.content?.substring(0, 100) || '').join('|'))
+      .digest('hex')
   };
   const dataHash = computeDataHash(inputData);
 

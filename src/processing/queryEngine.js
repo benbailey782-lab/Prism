@@ -434,17 +434,62 @@ function generateFollowUps(intent, context) {
 }
 
 /**
- * Extract visualizations to include in response
+ * Extract visualizations and structured data to include in response.
+ * The frontend uses these to render rich answer components instead of plain markdown.
  */
 function extractVisualizations(intent, context) {
   const visualizations = [];
 
+  // MEDDPICC scorecard — when deal context exists
   if (context.meddpicc && context.deals.length > 0) {
     visualizations.push({
       type: 'meddpicc_scorecard',
       dealId: context.deals[0].id,
       dealName: context.deals[0].company_name
     });
+  }
+
+  // Deal summary card — for deal-related intents with a matched deal
+  if (
+    (intent.intent === 'deal_strategy' || intent.intent === 'general') &&
+    context.deals.length > 0
+  ) {
+    const deal = context.deals[0];
+    visualizations.push({
+      type: 'deal_summary',
+      deal: {
+        id: deal.id,
+        company_name: deal.company_name,
+        contact_name: deal.contact_name || null,
+        contact_role: deal.contact_role || null,
+        status: deal.status || 'unknown',
+        value_amount: deal.value_amount || null,
+        stage: deal.stage || null,
+        last_activity_at: deal.last_activity_at || deal.updated_at || null,
+        close_date: deal.close_date || null
+      },
+      meddpiccSummary: context.meddpicc
+        ? context.meddpicc.map(m => ({ letter: m.letter, status: m.status, confidence: m.confidence }))
+        : []
+    });
+  }
+
+  // People cards — for people-related intents with matched people
+  if (intent.intent === 'people_intel' && context.people.length > 0) {
+    const topPeople = context.people.slice(0, 3);
+    for (const person of topPeople) {
+      visualizations.push({
+        type: 'person_card',
+        person: {
+          id: person.id,
+          name: person.name,
+          role: person.role || null,
+          company: person.company || null,
+          relationship_type: person.relationship_type || 'other',
+          updated_at: person.updated_at || null
+        }
+      });
+    }
   }
 
   return visualizations;
